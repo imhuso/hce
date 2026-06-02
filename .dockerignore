@@ -1,0 +1,31 @@
+# 构建产物
+/hce-server
+
+# 依赖缓存
+vendor/
+
+# 不要把前端源码和工具产物拷进后端镜像
+web/
+.ace-tool/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 环境配置（不要把含密钥的本地文件打进镜像）
+.env
+.env.*
+configs/config.local.yaml
+configs/config.*.local.yaml
+*.secret.yaml
+*.key
+*.pem
+
+# 本地运行时数据
+.hce/

@@ -1,0 +1,20 @@
+server:
+  port: 9527
+  host: 0.0.0.0
+
+embedding:
+  provider: gemini            # openai | ollama | voyageai | gemini
+  model: gemini-embedding-001
+  api_key: ""                 # 通过 HCE_EMBEDDING_API_KEY 或 GEMINI_API_KEY 环境变量设置
+  base_url: ""
+
+vectordb:
+  provider: milvus
+  address: localhost:19530    # 通过 MILVUS_ADDRESS 环境变量设置
+  token: ""
+
+splitter:
+  max_chunk_size: 5000   # 单 chunk 最大字节；调大 → 总 chunk 数下降，EMB 调用费用线性下降
+  chunk_overlap: 300
+  min_chunk_bytes: 100   # 小于此长度的 chunk 直接丢弃（纯声明/单行价值低）
+

@@ -1,0 +1,35 @@
+# 构建产物
+/hce-server
+
+# 依赖缓存
+vendor/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 环境配置（不要提交含密钥的配置）
+.env
+.env.*
+
+# 本地配置覆盖
+configs/config.local.yaml
+configs/config.*.local.yaml
+*.secret.yaml
+*.key
+*.pem
+
+# 服务端运行时数据
+.hce/
+
+# 工具产物
+.ace-tool/
+
+# 本地编译的 CLI 二进制
+/bin/
