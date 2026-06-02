@@ -283,18 +283,17 @@ func printSyncSummary(rep *client.SyncReport, cfg *client.Config) {
 
 func cmdSearch(ctx context.Context, args []string) int {
 	fs := flag.NewFlagSet("search", flag.ContinueOnError)
-	cf, rest := parseCommon(fs, args)
 	var (
 		topK   int
 		format string
 		noSync bool
 	)
-	fs2 := flag.NewFlagSet("search-rest", flag.ContinueOnError)
-	fs2.IntVar(&topK, "k", 10, "top_k（小项目可降到 5；大型代码库建议 10-20 以召回调用方）")
-	fs2.StringVar(&format, "f", "text", "输出格式：text | json")
-	fs2.BoolVar(&noSync, "no-sync", false, "跳过 sync")
-	_ = fs2.Parse(rest)
-	rest = fs2.Args()
+	// search 私有 flag 与通用 flag 注册到同一 flagset，避免两套 flagset 组合时
+	// -k 等被漏解析、其值混入 query（如 "-p x -k 10 查询" 把 "10" 并进查询词）。
+	fs.IntVar(&topK, "k", 10, "top_k（小项目可降到 5；大型代码库建议 10-20 以召回调用方）")
+	fs.StringVar(&format, "f", "text", "输出格式：text | json")
+	fs.BoolVar(&noSync, "no-sync", false, "跳过 sync")
+	cf, rest := parseCommon(fs, args)
 	if len(rest) == 0 {
 		warn("用法: hce-cli search <query> [...]")
 		return 2
@@ -423,10 +422,8 @@ func cmdClear(ctx context.Context, args []string) int {
 
 func cmdInit(ctx context.Context, args []string) int {
 	fs := flag.NewFlagSet("init", flag.ContinueOnError)
-	cf, rest := parseCommon(fs, args)
-	fs2 := flag.NewFlagSet("init-rest", flag.ContinueOnError)
-	id := fs2.String("id", "", "指定 codebase_id")
-	_ = fs2.Parse(rest)
+	id := fs.String("id", "", "指定 codebase_id")
+	cf, _ := parseCommon(fs, args)
 
 	root := cf.Root
 	if root == "" {
