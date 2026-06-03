@@ -7,6 +7,7 @@ require (
 	github.com/smacker/go-tree-sitter v0.0.0-20240827094217-dd81d9e9be82
 	golang.org/x/term v0.42.0
 	golang.org/x/time v0.15.0
+	google.golang.org/grpc v1.48.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -31,8 +32,5 @@ require (
 	golang.org/x/sys v0.43.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
 	google.golang.org/genproto v0.0.0-20220503193339-ba3ae3f07e29 // indirect
-	google.golang.org/grpc v1.48.0 // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
 )
-
-exclude github.com/smacker/go-tree-sitter/javascript v0.0.1
