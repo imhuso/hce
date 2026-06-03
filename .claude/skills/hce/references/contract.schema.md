@@ -1,45 +1,25 @@
-# Contract：命令 / Inputs / Outputs / Exit Codes
+# Contract：命令速查 / 退出码
 
-后端为 `hce`（client-server + push 模式，详见 SKILL.md）。服务端地址按分层配置解析（见 setup.md）。
+服务端地址按分层配置解析（见 setup.md）；查询技巧与 `clear` 强制约束见 SKILL.md。
 
-## Search
+## 命令
 
 ```bash
-hce search "<query>" [-k 10] [-f text|json] [--no-sync]
+hce search "<query>" [-k 5] [-f text|json] [--no-sync]  # 语义检索（默认先增量 sync）
+hce sync          # 建 / 增量更新索引（首次全量，之后 size+mtime 快路径 + sha256 慢路径）
+hce status        # codebase 配置 / 生效 base_url / 在线·离线 / 上次 sync
+hce config [--base-url <url>]    # 查看 / 写入全局地址（~/.hce/config.json）
+hce init [--id <name>]           # 显式初始化 .hce/config.json（ID 默认按项目路径派生）
+hce list          # 列出服务端所有已索引 collection
+hce clear         # 清除当前 codebase 索引（⚠ 须用户同意）
 ```
 
-**Input**
-- `<query>`：自然语言查询（用完整一句话，别用单词）
-- `-k`：返回条数（默认 5，建议 10；召回不全时调大到 15-20）
-- `-f`：输出格式 `text`（默认）/ `json`
+## search 参数
+- `-k`：返回条数，默认 5
+- `-f`：`text`（默认）/ `json`
 - `--no-sync`：跳过增量 sync，仅检索
-- 环境变量 `HCE_BASE_URL` / 旗标 `--base-url`：一次性覆盖服务端地址
+- `--base-url` / `HCE_BASE_URL`：一次性覆盖服务端地址
 
-**Output (stdout)**
-- 有结果时为非空文本：`Path: <相对路径>` + 带行号的代码片段（text 格式）
-
-**Exit codes**
-- 非 0：用法错误、`hce` 不在 PATH、或后端不可达 / 检索失败
-  （确认 hce 已装、后端在跑、`hce config` 的地址正确）
-
-## Sync（建/增量更新索引）
-
-```bash
-hce sync
-```
-- 首次全量、之后增量（size+mtime 快路径 + sha256 慢路径）；search 默认也会先 sync，通常无需手动跑。
-
-## Config（查看 / 设置全局地址）
-
-```bash
-hce config                                   # 查看全局地址 + 优先级
-hce config --base-url http://<ip>:9528/api/v1   # 写入 ~/.hce/config.json
-```
-
-## 其他
-
-```bash
-hce status     # 当前 codebase 配置 / 生效 base_url / 上次 sync
-hce list       # 列出服务端所有已索引 collection
-hce clear      # 清除当前 codebase 索引（⚠ 须用户同意，见 SKILL.md 强制约束）
-```
+## 输出 / 退出码
+- **stdout**：有结果时非空，`Path: <相对路径>` + 带行号代码片段（text 格式）
+- **退出非 0**：用法错误 / `hce` 不在 PATH / 后端不可达 / 检索失败
