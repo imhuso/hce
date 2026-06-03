@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"runtime/debug"
 	"strings"
 	"syscall"
 	"time"
@@ -16,8 +17,24 @@ import (
 
 const defaultBaseURL = "http://localhost:9528/api/v1"
 
-// version 由发布构建经 ldflags 注入：-X main.version=<tag>；本地开发为 dev。
+// version is injected at release build time via ldflags (-X main.version=<tag>).
+// For `go install` and local builds it stays "dev"; resolveVersion then falls
+// back to the module version recorded in the binary's BuildInfo.
 var version = "dev"
+
+// resolveVersion prefers the ldflags-injected tag (release builds) and falls
+// back to BuildInfo.Main.Version for `go install` builds (e.g. v0.2.3).
+func resolveVersion() string {
+	if version != "dev" {
+		return version
+	}
+	if bi, ok := debug.ReadBuildInfo(); ok {
+		if v := bi.Main.Version; v != "" && v != "(devel)" {
+			return v
+		}
+	}
+	return version
+}
 
 const usage = `hce — HCE 代码语义检索客户端
 
@@ -74,7 +91,7 @@ func main() {
 	case "config":
 		os.Exit(cmdConfig(ctx, args))
 	case "version", "-v", "--version":
-		fmt.Printf("hce %s\n", version)
+		fmt.Printf("hce %s\n", resolveVersion())
 	case "-h", "--help", "help":
 		fmt.Print(usage)
 	default:
