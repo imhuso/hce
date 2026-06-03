@@ -3,6 +3,10 @@
 
 # 依赖缓存
 vendor/
+node_modules/
+
+# 发布构建产物（release 工作流交叉编译输出）
+/dist/
 
 # IDE
 .idea/

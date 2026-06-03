@@ -3,18 +3,19 @@
 本 skill 直接驱动 `hce-cli`，不含脚本。需要两样东西：一个可达的 **hce-server 后端**，
 和本机 PATH 里的 **hce-cli** 二进制。
 
-## 1. 装 hce-cli（单一跨平台二进制）
+## 1. 装 hce-cli（单一跨平台二进制，无需 CGO）
 
 ```bash
-# 在 hce 仓库根目录
-go build -o hce-cli ./cmd/hce-cli   # 纯客户端，无需 CGO；可交叉编译到任意 OS/架构
-cp hce-cli /usr/local/bin/          # 放进 PATH（Windows 用 hce-cli.exe）
-```
+# A. go install（有 Go，一行，装到 ~/go/bin）
+go install github.com/imhuso/hce/cmd/hce-cli@latest
 
-交叉编译示例（在任一平台产出其他平台的二进制）：
-```bash
-GOOS=windows GOARCH=amd64 go build -o hce-cli.exe ./cmd/hce-cli
-GOOS=linux   GOARCH=arm64 go build -o hce-cli      ./cmd/hce-cli
+# B. 从 Releases 下载预编译二进制（无需 Go）：选对应平台 .tar.gz/.zip 解压放进 PATH
+gh release download --repo imhuso/hce --pattern '*linux_amd64*'
+
+# C. 从源码编译
+go build -o hce-cli ./cmd/hce-cli && sudo mv hce-cli /usr/local/bin/
+
+hce-cli version   # 验证
 ```
 
 ## 2. 后端从哪来（决定服务端地址）

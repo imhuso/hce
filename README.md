@@ -1,3 +1,5 @@
+<div align="right"><b>简体中文</b> | <a href="./README.en.md">English</a></div>
+
 # HCE · 代码语义检索引擎
 
 > 用自然语言搜索你的代码库。客户端在本地扫描并推送变更，服务端负责切分、向量化与混合检索。
@@ -104,6 +106,33 @@ cd /path/to/your/project
 
 ---
 
+## 📦 安装 hce-cli
+
+`hce-cli` 是纯 Go 客户端（**无需 CGO**），跨平台单文件。三选一：
+
+```bash
+# A. go install（有 Go 环境，一行；装到 ~/go/bin）
+go install github.com/imhuso/hce/cmd/hce-cli@latest
+
+# B. 从 Releases 下载预编译二进制（无需 Go）
+#    打 tag 后由 GitHub Actions 自动交叉编译产出 darwin/linux/windows × amd64/arm64。
+#    https://github.com/imhuso/hce/releases 选对应平台的 .tar.gz/.zip，解压后放进 PATH。
+gh release download --repo imhuso/hce --pattern '*linux_amd64*'
+
+# C. 从源码编译
+go build -o hce-cli ./cmd/hce-cli && sudo mv hce-cli /usr/local/bin/
+
+hce-cli version    # 验证（发布版显示 tag 版本号，本地源码编译为 dev）
+```
+
+安装后配一次机器级服务端地址（所有项目通用）：
+
+```bash
+hce-cli config --base-url http://<服务器IP或域名>:9528/api/v1
+```
+
+---
+
 ## 🖥️ CLI 用法
 
 ```bash
@@ -113,6 +142,8 @@ hce-cli status                     # 当前 codebase 配置 / 上次 sync
 hce-cli list                       # 列出服务端所有已索引 collection
 hce-cli clear                      # 清除当前 codebase 的服务端索引 + 本地 state
 hce-cli init [--id <name>]         # 显式初始化 .hce/config.json
+hce-cli config [--base-url <url>]  # 查看 / 设置全局服务端地址（~/.hce/config.json）
+hce-cli version                    # 显示版本
 ```
 
 **通用选项**
@@ -120,8 +151,8 @@ hce-cli init [--id <name>]         # 显式初始化 .hce/config.json
 | 选项 | 默认 | 说明 |
 |------|------|------|
 | `-p <path>` | 自动查找 | 指定项目根（默认从当前目录向上找 `.hce` 或 `.git`） |
-| `--base-url <url>` | `http://localhost:9528/api/v1` | 覆盖服务端地址（亦可用 `HCE_BASE_URL`） |
-| `-k <int>` | 5 | search 的 top_k |
+| `--base-url <url>` | `http://localhost:9528/api/v1` | 覆盖服务端地址。优先级：旗标 > `HCE_BASE_URL` > 项目 `.hce/config.json` > 全局 `~/.hce/config.json` > 默认 |
+| `-k <int>` | 10 | search 的 top_k |
 | `-f text\|json` | text | search 输出格式 |
 | `--no-sync` | — | search 时跳过 sync，仅检索 |
 
@@ -226,7 +257,20 @@ go build ./...
 - **Milvus VARCHAR 上限 65535 字节**：content 入库前 `truncateOversized` 截到 60000，超长 chunk 必须硬切，否则整批 insert 失败。
 - **非 UTF-8 必须 sanitize**：grpc marshal 遇非法 UTF-8 会拒收整批，`sanitizeUTF8` 把坏字节替换为 `�`；客户端侧也直接跳过非 UTF-8 文件。
 - **embedding 非对称编码**：索引侧用 `TaskDocument`，查询侧用 query task type。索引与查询的 task type 必须配对，不要混用。
-- **CGO 必需**：tree-sitter 是 cgo 绑定，`CGO_ENABLED=0` 无法编译。
+- **CGO 必需**：tree-sitter 是 cgo 绑定，`CGO_ENABLED=0` 无法编译（仅 server；CLI 纯 Go 无 CGO）。
+
+### 发布（maintainer）
+
+版本号锚定在根 `package.json`，用 [bumpp](https://github.com/antfu-collective/bumpp) 一键 bump + 打 tag + 推送：
+
+```bash
+npm install           # 首次：装 bumpp（devDependency）
+npm run release       # 交互选 patch/minor/major → 提交 + 打 tag vX.Y.Z + 推送
+```
+
+推送 `v*` tag 会触发 `.github/workflows/release.yml`：交叉编译 hce-cli 五平台（版本号经
+`-ldflags "-X main.version=<tag>"` 注入），打包 `.tar.gz`/`.zip` + `checksums.txt`，自动建 GitHub Release。
+`.github/workflows/ci.yml` 则在 push/PR 时跑 `go vet` + `go build`。
 
 ---
 

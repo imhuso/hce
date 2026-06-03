@@ -1,0 +1,24 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: vet + build
+        env:
+          CGO_ENABLED: '1'
+          CGO_CFLAGS: '-Wno-null-character'   # 抑制上游 lua parser 的 NUL 字面量警告
+        run: |
+          go vet ./...
+          go build ./...

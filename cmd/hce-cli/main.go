@@ -16,6 +16,9 @@ import (
 
 const defaultBaseURL = "http://localhost:9528/api/v1"
 
+// version 由发布构建经 ldflags 注入：-X main.version=<tag>；本地开发为 dev。
+var version = "dev"
+
 const usage = `hce-cli — HCE 代码语义检索客户端
 
 用法:
@@ -26,6 +29,7 @@ const usage = `hce-cli — HCE 代码语义检索客户端
   hce-cli clear                             清除当前 codebase 的服务端索引
   hce-cli init [--id <name>]                显式初始化 .hce/config.json
   hce-cli config [--base-url <url>]         查看 / 设置全局服务端地址（~/.hce/config.json）
+  hce-cli version                           显示版本
 
 通用选项:
   -p <path>          指定项目根（默认从当前目录向上找 .hce 或 .git；都没有用当前目录）
@@ -69,6 +73,8 @@ func main() {
 		os.Exit(cmdInit(ctx, args))
 	case "config":
 		os.Exit(cmdConfig(ctx, args))
+	case "version", "-v", "--version":
+		fmt.Printf("hce-cli %s\n", version)
 	case "-h", "--help", "help":
 		fmt.Print(usage)
 	default:
