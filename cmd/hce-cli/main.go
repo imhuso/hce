@@ -102,8 +102,21 @@ func parseCommon(fs *flag.FlagSet, args []string) (*commonFlags, []string) {
 	fs.IntVar(&cf.TPM, "tpm", 0, "每分钟最多多少 tokens（0=由服务端 provider 自适应限速）")
 	// 默认 1：服务端按 collection 串行
 	fs.IntVar(&cf.Concurrency, "concurrency", 1, "并发上传 worker 数（单 codebase 索引保持 1；多 codebase 同时索引可调高）")
-	_ = fs.Parse(args)
-	return cf, fs.Args()
+	// flag 与位置参数(query)交错解析：反复 Parse，逐个收集非 flag token，
+	// 使 `search "query" -k 3` 与 `search -k 3 "query"` 等价，flag 不漏解析、不污染 query。
+	var positional []string
+	rest := args
+	for {
+		if err := fs.Parse(rest); err != nil {
+			break
+		}
+		if fs.NArg() == 0 {
+			break
+		}
+		positional = append(positional, fs.Arg(0))
+		rest = fs.Args()[1:]
+	}
+	return cf, positional
 }
 
 func resolveContext(cf *commonFlags) (root string, cfg *client.Config, err error) {
