@@ -1,6 +1,6 @@
 {
   "name": "hce",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "private": true,
   "description": "版本号锚点：bumpp 在此 bump version、打 tag、推送，触发 release 工作流交叉编译发布 hce。Go 代码本身不依赖本文件。",
   "scripts": {
