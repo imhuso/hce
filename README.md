@@ -1,6 +1,6 @@
 <div align="right"><b>English</b> | <a href="./README.zh-CN.md">简体中文</a></div>
 
-<h1 align="center">HCE · Code Semantic Search Engine</h1>
+<h1 align="center">HCE · Semantic Code Search Engine</h1>
 
 <p align="center">Search your codebase in natural language. The client scans and pushes changes locally; the server chunks, embeds, and runs hybrid retrieval.</p>
 
