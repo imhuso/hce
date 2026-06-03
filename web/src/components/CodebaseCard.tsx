@@ -71,18 +71,18 @@ export function CodebaseCard({ index, active, onSelect, onDelete }: Props) {
           : "本机未知此库的 codebase_id（id 经单向哈希，服务端不存原文）。用 hce-cli 搜索 / 同步一次即可自动命名后在此管理。"
       }
       className={cn(
-        "group relative flex flex-col gap-3 rounded-xl bg-card p-4 ring-1 transition-all",
+        "elevate group relative flex flex-col gap-3 rounded-xl bg-card p-4 ring-1 transition-all duration-200",
         index.named
-          ? "cursor-pointer ring-foreground/10 hover:-translate-y-0.5 hover:ring-foreground/25 hover:shadow-lg hover:shadow-black/20"
-          : "cursor-help ring-foreground/[0.06] opacity-70",
-        active && "ring-2 ring-blue-500/70 hover:ring-blue-500/70"
+          ? "cursor-pointer ring-border/70 hover:-translate-y-0.5 hover:ring-brand/45 hover:shadow-xl hover:shadow-brand/10"
+          : "cursor-help ring-border/50 opacity-65",
+        active && "ring-2 ring-brand/70 shadow-lg shadow-brand/15 hover:ring-brand/70"
       )}
     >
       <div className="flex items-start justify-between gap-2">
         <span
           className={cn(
             "flex size-9 shrink-0 items-center justify-center rounded-lg",
-            index.named ? "bg-blue-500/10 text-blue-500" : "bg-muted text-muted-foreground"
+            index.named ? "bg-brand/12 text-brand ring-1 ring-brand/20" : "bg-muted text-muted-foreground"
           )}
         >
           {index.named ? <FolderGit2 className="size-4.5" /> : <Database className="size-4.5" />}
@@ -125,7 +125,7 @@ export function CodebaseCard({ index, active, onSelect, onDelete }: Props) {
       {hasLangs ? (
         <LanguageBar languages={index.languages!} />
       ) : index.named ? (
-        <div className="flex items-center gap-1 text-xs font-medium text-blue-500 opacity-0 transition-opacity group-hover:opacity-100">
+        <div className="flex items-center gap-1 text-xs font-medium text-brand opacity-0 transition-opacity group-hover:opacity-100">
           <Search className="size-3.5" />
           选它来搜索
         </div>

@@ -55,6 +55,52 @@ func LoadOrInit(root string) (*Config, error) {
 	return cfg, nil
 }
 
+// GlobalConfigPath 返回每用户机器级配置路径 ~/.hce/config.json。
+// 与项目级 .hce/config.json 同名不同位：项目级随项目走、可覆盖全局；全局级随用户走、做机器默认。
+func GlobalConfigPath() (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(home, HCEDir, ConfigFile), nil
+}
+
+// LoadGlobalBaseURL 读取全局配置里的 base_url；文件不存在返回空串且不报错。
+func LoadGlobalBaseURL() (string, error) {
+	path, err := GlobalConfigPath()
+	if err != nil {
+		return "", err
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return "", nil
+		}
+		return "", err
+	}
+	var cfg Config
+	if err := json.Unmarshal(data, &cfg); err != nil {
+		return "", fmt.Errorf("解析 %s 失败: %w", path, err)
+	}
+	return cfg.BaseURL, nil
+}
+
+// SaveGlobalBaseURL 把 base_url 写入 ~/.hce/config.json（全局只用到 base_url，codebase_id 留空）。
+func SaveGlobalBaseURL(baseURL string) error {
+	path, err := GlobalConfigPath()
+	if err != nil {
+		return err
+	}
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return err
+	}
+	data, err := json.MarshalIndent(&Config{BaseURL: baseURL}, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(path, data, 0o644)
+}
+
 // SaveConfig 保存 .hce/config.json
 func SaveConfig(root string, cfg *Config) error {
 	dir := filepath.Join(root, HCEDir)

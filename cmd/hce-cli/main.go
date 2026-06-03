@@ -25,10 +25,11 @@ const usage = `hce-cli — HCE 代码语义检索客户端
   hce-cli list                              列出服务端所有已索引集合
   hce-cli clear                             清除当前 codebase 的服务端索引
   hce-cli init [--id <name>]                显式初始化 .hce/config.json
+  hce-cli config [--base-url <url>]         查看 / 设置全局服务端地址（~/.hce/config.json）
 
 通用选项:
   -p <path>          指定项目根（默认从当前目录向上找 .hce 或 .git；都没有用当前目录）
-  --base-url <url>   覆盖服务端地址（也可用环境变量 HCE_BASE_URL）
+  --base-url <url>   覆盖服务端地址（优先级：旗标 > HCE_BASE_URL > 项目 .hce/config.json > 全局 ~/.hce/config.json > 默认）
 
 search 选项:
   -k <int>           top_k，默认 5
@@ -66,6 +67,8 @@ func main() {
 		os.Exit(cmdClear(ctx, args))
 	case "init":
 		os.Exit(cmdInit(ctx, args))
+	case "config":
+		os.Exit(cmdConfig(ctx, args))
 	case "-h", "--help", "help":
 		fmt.Print(usage)
 	default:
@@ -114,10 +117,17 @@ func resolveContext(cf *commonFlags) (root string, cfg *client.Config, err error
 	if err != nil {
 		return "", nil, err
 	}
+	// base_url 解析优先级（高→低）：--base-url 旗标 > HCE_BASE_URL 环境变量 >
+	// 项目 .hce/config.json（已载入 cfg.BaseURL）> 全局 ~/.hce/config.json > 内置默认。
 	if v := cf.BaseURL; v != "" {
 		cfg.BaseURL = v
 	} else if v := os.Getenv("HCE_BASE_URL"); v != "" {
 		cfg.BaseURL = v
+	}
+	if cfg.BaseURL == "" {
+		if g, _ := client.LoadGlobalBaseURL(); g != "" {
+			cfg.BaseURL = g
+		}
 	}
 	if cfg.BaseURL == "" {
 		cfg.BaseURL = defaultBaseURL
@@ -447,4 +457,44 @@ func cmdInit(ctx context.Context, args []string) int {
 	_ = ctx
 	return 0
 }
-// log demo 1777091206
+
+// cmdConfig 查看 / 设置全局服务端地址（~/.hce/config.json）。
+// 不带参数：打印全局配置与 base_url 优先级；带 --base-url：写入全局配置。
+func cmdConfig(ctx context.Context, args []string) int {
+	_ = ctx
+	fs := flag.NewFlagSet("config", flag.ContinueOnError)
+	cf, _ := parseCommon(fs, args)
+
+	path, err := client.GlobalConfigPath()
+	if err != nil {
+		warn("✘ 无法定位全局配置路径: %v", err)
+		return 1
+	}
+
+	// 带 --base-url：写入全局配置。
+	if cf.BaseURL != "" {
+		if err := client.SaveGlobalBaseURL(cf.BaseURL); err != nil {
+			warn("✘ 写入全局配置失败: %v", err)
+			return 1
+		}
+		fmt.Printf("✓ 已写入全局配置 %s\n  base_url = %s\n", path, cf.BaseURL)
+		return 0
+	}
+
+	// 不带参数：打印当前全局配置与优先级说明。
+	g, _ := client.LoadGlobalBaseURL()
+	fmt.Printf("全局配置文件: %s\n", path)
+	if g != "" {
+		fmt.Printf("  base_url = %s\n", g)
+	} else {
+		fmt.Printf("  base_url = (未设置，回退到内置默认 %s)\n", defaultBaseURL)
+	}
+	fmt.Printf("\nbase_url 优先级（高→低）:\n")
+	fmt.Printf("  1. --base-url 旗标\n")
+	fmt.Printf("  2. HCE_BASE_URL 环境变量\n")
+	fmt.Printf("  3. 项目 .hce/config.json 的 base_url\n")
+	fmt.Printf("  4. 全局 %s 的 base_url\n", path)
+	fmt.Printf("  5. 内置默认 %s\n", defaultBaseURL)
+	fmt.Printf("\n设置全局地址: hce-cli config --base-url http://<ip>:9528/api/v1\n")
+	return 0
+}

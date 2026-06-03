@@ -59,11 +59,11 @@ export function ScopeSelector({ value, onChange, options }: Props) {
         aria-haspopup="listbox"
         aria-expanded={open}
         className={cn(
-          "group inline-flex h-9 max-w-[60vw] items-center gap-2 rounded-lg border border-input bg-card px-3 text-sm font-medium ring-1 ring-transparent transition-colors hover:border-ring hover:bg-muted/50",
-          open && "border-ring ring-ring/30"
+          "elevate group inline-flex h-9 max-w-[60vw] items-center gap-2 rounded-lg border border-border/80 bg-card px-3 text-sm font-medium ring-1 ring-transparent transition-colors hover:border-brand/50 hover:bg-muted/50",
+          open && "border-brand/60 ring-brand/25"
         )}
       >
-        <Boxes className="size-4 shrink-0 text-blue-500" />
+        <Boxes className="size-4 shrink-0 text-brand" />
         {pretty ? (
           <span className="min-w-0 truncate">
             <span className="font-semibold">{pretty.name}</span>
@@ -107,7 +107,7 @@ export function ScopeSelector({ value, onChange, options }: Props) {
                     active && "bg-muted"
                   )}
                 >
-                  <Check className={cn("size-4 shrink-0", active ? "text-blue-500" : "text-transparent")} />
+                  <Check className={cn("size-4 shrink-0", active ? "text-brand" : "text-transparent")} />
                   <span className="min-w-0 flex-1 truncate text-sm">
                     <span className="font-medium">{p.name}</span>
                     {p.hash && <span className="ml-1 font-mono text-xs text-muted-foreground">{p.hash}</span>}

@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { BrandMark } from '@/components/BrandMark';
 import { ScopeSelector } from '@/components/ScopeSelector';
 import { CodebaseCard } from '@/components/CodebaseCard';
 import type { ResolvedIndex } from '@/components/CodebaseCard';
@@ -188,30 +189,31 @@ function App() {
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-background text-foreground">
-      {/* 背景光晕 */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[420px] bg-gradient-to-b from-blue-500/[0.07] via-violet-500/[0.04] to-transparent"
-      />
+      {/* 氛围层：技术网格 + 品牌辉光 */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute inset-x-0 top-0 h-[640px] bg-grid opacity-70" />
+        <div className="glow-1 absolute left-1/2 top-[-200px] h-[460px] w-[900px] max-w-[130vw] -translate-x-1/2 blur-2xl" />
+        <div className="glow-2 absolute right-[-140px] top-[60px] h-[340px] w-[340px] blur-3xl" />
+      </div>
 
       {/* 顶部栏 */}
-      <header className="sticky top-0 z-30 border-b bg-background/70 backdrop-blur supports-[backdrop-filter]:bg-background/50">
-        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-3 px-4 sm:px-6">
+      <header className="sticky top-0 z-30 border-b border-border/70 bg-background/60 backdrop-blur-xl">
+        <div className="mx-auto flex h-15 max-w-5xl items-center justify-between gap-3 px-4 py-2.5 sm:px-6">
           <div className="flex items-center gap-2.5">
-            <span className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-violet-500 text-white shadow-sm shadow-blue-500/20">
-              <Boxes className="size-4.5" />
-            </span>
-            <h1 className="text-lg font-bold tracking-tight">HCE</h1>
-            <span className="hidden text-sm text-muted-foreground sm:inline">代码语义检索</span>
+            <BrandMark />
+            <div className="flex items-baseline gap-2">
+              <span className="text-[15px] font-semibold tracking-tight">HCE</span>
+              <span className="hidden text-[13px] text-muted-foreground sm:inline">代码语义检索</span>
+            </div>
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             <Badge
-              variant={online ? 'secondary' : 'outline'}
-              className="gap-1.5"
+              variant="outline"
+              className="gap-1.5 border-border/80 bg-card/60"
               title={online === null ? '连接中…' : online ? '服务端在线' : '连不上服务端'}
             >
-              <span className={`size-2 rounded-full ${online === null ? 'bg-muted-foreground' : online ? 'animate-pulse bg-emerald-500' : 'bg-red-500'}`} />
-              {online === null ? '连接中' : online ? '在线' : '离线'}
+              <span className={`size-1.5 rounded-full ${online === null ? 'bg-muted-foreground' : online ? 'bg-emerald-400 shadow-[0_0_8px] shadow-emerald-400/70' : 'bg-red-400'}`} />
+              <span className="text-muted-foreground">{online === null ? '连接中' : online ? '在线' : '离线'}</span>
             </Badge>
             <ThemeToggle />
           </div>
@@ -220,23 +222,29 @@ function App() {
 
       <main className="mx-auto max-w-5xl px-4 pb-16 sm:px-6">
         {/* Hero 搜索 */}
-        <section className="pt-10 sm:pt-14">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
-              用自然语言搜索你的代码
+        <section className="pt-12 sm:pt-16">
+          <div className="mx-auto max-w-2xl">
+            <div className="animate-rise flex justify-center" style={{ animationDelay: '40ms' }}>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card/50 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur">
+                <span className="size-1.5 rounded-full bg-brand shadow-[0_0_10px] shadow-brand/70" />
+                语义检索引擎
+              </span>
+            </div>
+            <h2 className="animate-rise mt-5 text-center text-[1.7rem] font-semibold leading-[1.1] tracking-[-0.02em] text-balance sm:text-[2.6rem]" style={{ animationDelay: '90ms' }}>
+              用自然语言检索你的代码库
             </h2>
-            <div className="mt-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+            <div className="animate-rise mt-4 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-sm text-muted-foreground" style={{ animationDelay: '140ms' }}>
               <span>在</span>
               <ScopeSelector value={activeId} onChange={setActiveId} options={scopeOptions} />
-              <span>里检索</span>
+              <span>中检索</span>
             </div>
 
-            <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+            <div className="animate-rise mt-5 flex flex-col gap-2 sm:flex-row sm:items-center" style={{ animationDelay: '190ms' }}>
               <div className="relative w-full min-w-0 sm:flex-1">
                 <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4.5 -translate-y-1/2 text-muted-foreground" />
                 <input
                   ref={queryRef}
-                  className="h-12 w-full rounded-xl border border-input bg-card pl-11 pr-3 text-base shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-4 focus-visible:ring-ring/30 dark:bg-input/30"
+                  className="elevate h-12 w-full rounded-xl border border-border/80 bg-card pl-11 pr-3 text-base outline-none transition-all placeholder:text-muted-foreground focus-visible:border-brand/60 focus-visible:ring-4 focus-visible:ring-brand/20"
                   placeholder="描述你要找的逻辑，例如「登录鉴权」「文件上传接口」…"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
@@ -245,7 +253,7 @@ function App() {
               </div>
               <div className="flex gap-2">
                 <select
-                  className="h-12 flex-1 rounded-xl border border-input bg-card px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-4 focus-visible:ring-ring/30 sm:flex-none dark:bg-input/30"
+                  className="elevate h-12 flex-1 rounded-xl border border-border/80 bg-card px-3 text-sm outline-none focus-visible:border-brand/60 focus-visible:ring-4 focus-visible:ring-brand/20 sm:flex-none"
                   value={topK}
                   onChange={(e) => setTopK(Number(e.target.value))}
                   title="返回结果数量"
@@ -253,7 +261,7 @@ function App() {
                   {TOP_K_OPTIONS.map((n) => <option key={n} value={n}>Top {n}</option>)}
                 </select>
                 <Button
-                  className="h-12 flex-1 px-6 text-base sm:flex-none"
+                  className="h-12 flex-1 px-6 text-base shadow-lg shadow-brand/25 sm:flex-none"
                   onClick={() => runSearch(activeId, query)}
                   disabled={searching || !activeId.trim() || !query.trim()}
                 >
@@ -265,7 +273,7 @@ function App() {
 
             {status && (
               <p
-                className={`mt-3 text-sm ${
+                className={`mt-3 text-center text-sm ${
                   status.tone === 'success'
                     ? 'text-emerald-600 dark:text-emerald-400'
                     : status.tone === 'error' ? 'text-destructive' : 'text-muted-foreground'
@@ -397,28 +405,29 @@ function App() {
 
               {indexes.length > 0 && (
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {resolved.map((r) => (
-                    <CodebaseCard
-                      key={r.collection}
-                      index={r}
-                      active={r.named && r.id === activeId}
-                      onSelect={() => handleSelectCodebase(r.id)}
-                      onDelete={() => setDeleteTarget({ id: r.id, numChunks: r.numChunks })}
-                    />
+                  {resolved.map((r, i) => (
+                    <div key={r.collection} className="animate-rise h-full [&>*]:h-full" style={{ animationDelay: `${Math.min(i, 10) * 45}ms` }}>
+                      <CodebaseCard
+                        index={r}
+                        active={r.named && r.id === activeId}
+                        onSelect={() => handleSelectCodebase(r.id)}
+                        onDelete={() => setDeleteTarget({ id: r.id, numChunks: r.numChunks })}
+                      />
+                    </div>
                   ))}
                 </div>
               )}
             </section>
 
             {/* CLI 提示 */}
-            <section className="mt-10 rounded-xl bg-card ring-1 ring-foreground/10">
-              <div className="flex items-center gap-2 border-b px-4 py-3">
-                <Terminal className="size-4 text-muted-foreground" />
+            <section className="elevate mt-10 overflow-hidden rounded-xl bg-card ring-1 ring-border/70">
+              <div className="flex items-center gap-2 border-b border-border/70 px-4 py-3">
+                <Terminal className="size-4 text-brand" />
                 <h3 className="text-sm font-semibold">如何把代码库索引进来</h3>
               </div>
-              <div className="space-y-2 px-4 py-4 text-sm text-muted-foreground">
-                <p>浏览器读不到本地文件，索引由命令行客户端 <code className="rounded bg-muted px-1 py-0.5 text-blue-500">hce-cli</code> 推送：</p>
-                <pre className="overflow-x-auto rounded-lg bg-zinc-950 p-3 font-mono text-[12px] leading-relaxed text-zinc-200">
+              <div className="space-y-2.5 px-4 py-4 text-sm text-muted-foreground">
+                <p>浏览器读不到本地文件，索引由命令行客户端 <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-brand">hce-cli</code> 推送：</p>
+                <pre className="bg-code overflow-x-auto rounded-lg p-3.5 font-mono text-[12.5px] leading-relaxed text-zinc-200 ring-1 ring-white/5">
 {`# 在项目根目录
 hce-cli sync       # 扫描 + 推送变更
 hce-cli search ".." # 自动 sync 后搜索（也会让它出现在上面）`}
@@ -429,6 +438,16 @@ hce-cli search ".." # 自动 sync 后搜索（也会让它出现在上面）`}
           </>
         )}
       </main>
+
+      <footer className="mx-auto max-w-5xl px-4 pb-10 sm:px-6">
+        <div className="flex flex-col items-center justify-between gap-3 border-t border-border/60 pt-6 text-xs text-muted-foreground sm:flex-row">
+          <span className="flex items-center gap-1.5">
+            <span className="size-1.5 rounded-full bg-brand" />
+            HCE · 代码语义检索引擎
+          </span>
+          <span className="font-mono tracking-tight">本地 Milvus 混合检索 · 多 provider embedding</span>
+        </div>
+      </footer>
 
       <ConfirmDeleteDialog
         key={deleteTarget?.id ?? 'none'}

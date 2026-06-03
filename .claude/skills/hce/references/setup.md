@@ -1,55 +1,64 @@
-# Setup：部署后端 + 配置服务端地址
+# Setup：装 hce-cli + 配置服务端地址
 
-本 skill 是 hce 的**客户端使用层**。它依赖两样东西：一个可达的 **hce-server 后端**，和一个本机的 **hce-cli** 二进制。
+本 skill 直接驱动 `hce-cli`，不含脚本。需要两样东西：一个可达的 **hce-server 后端**，
+和本机 PATH 里的 **hce-cli** 二进制。
 
-## 1. 后端从哪来
+## 1. 装 hce-cli（单一跨平台二进制）
 
-三选一，对应三种 `HCE_BASE_URL`：
+```bash
+# 在 hce 仓库根目录
+go build -o hce-cli ./cmd/hce-cli   # 纯客户端，无需 CGO；可交叉编译到任意 OS/架构
+cp hce-cli /usr/local/bin/          # 放进 PATH（Windows 用 hce-cli.exe）
+```
+
+交叉编译示例（在任一平台产出其他平台的二进制）：
+```bash
+GOOS=windows GOARCH=amd64 go build -o hce-cli.exe ./cmd/hce-cli
+GOOS=linux   GOARCH=arm64 go build -o hce-cli      ./cmd/hce-cli
+```
+
+## 2. 后端从哪来（决定服务端地址）
+
+三选一：
 
 ### A. 本机自起（默认）
 ```bash
-cd /path/to/hce          # hce 仓库根
+cd /path/to/hce
 cp .env.example .env     # 填入 HCE_EMBEDDING_API_KEY
 docker compose up -d     # etcd + minio + milvus + hce-server + hce-web
 ```
-后端在 `localhost:9527`，前端/反代在 `localhost:9528`。`HCE_BASE_URL` 留空即可（默认走 9528）。
+后端在 `localhost:9527`，前端/反代在 `localhost:9528`。无需配地址，默认走 9528。
 
 ### B. 局域网共享
-某台机器（开发服务器 / NAS）按 A 起栈，其他人连它的内网 IP：
+某台机器按 A 起栈，其他人连它的内网 IP（compose 默认只映射 9528 到宿主，统一走它）：
 ```bash
-# config.sh
-export HCE_BASE_URL="http://192.168.1.50:9528/api/v1"
+hce-cli config --base-url http://192.168.1.50:9528/api/v1
 ```
-> 注意：`docker-compose.yml` 默认只把 **9528** 端口映射到宿主机（`ports: 9528:80`），
-> 后端 9527 仅在 compose 内网。局域网访问统一走 9528（nginx 反代到后端），无需额外开端口。
 
 ### C. 公网域名（已部署）
-把 9528 反代到一个域名（建议加 HTTPS / 鉴权），客户端：
+把 9528 反代到域名（建议 HTTPS + 鉴权）：
 ```bash
-# config.sh
-export HCE_BASE_URL="https://hce.example.com/api/v1"
+hce-cli config --base-url https://hce.example.com/api/v1
 ```
 
-## 2. hce-cli 二进制
+## 3. 分层 JSON 配置（按用户、按项目）
 
-```bash
-cd /path/to/hce
-go build -o bin/hce-cli ./cmd/hce-cli   # 纯客户端，无需 CGO；跨平台可直接交叉编译分发
-```
-让脚本能找到它（任选其一）：
-- 放进 PATH（如 `cp bin/hce-cli /usr/local/bin/`）
-- 在 `config.sh` 设 `export HCE_CLI=/abs/path/to/hce-cli`
-- 放在默认位置 `~/Workspace/code/hce/bin/hce-cli`
+地址按优先级解析，高 → 低：
 
-## 3. 首次索引
+1. `--base-url <url>` 旗标（一次性）
+2. `HCE_BASE_URL` 环境变量（一次性 / CI）
+3. **项目** `<项目>/.hce/config.json` 的 `base_url`（某项目要连别的后端时填这里）
+4. **全局** `~/.hce/config.json` 的 `base_url`（每用户机器级默认，`hce-cli config --base-url` 写入）
+5. 内置默认 `http://localhost:9528/api/v1`
+
+- "不同用户"：`~/.hce/` 在各自 home，天然隔离。
+- "不同项目"：项目级 `.hce/config.json` 覆盖全局默认。
+- 查看当前生效配置与优先级：`hce-cli config`（无参）。
+
+## 4. 首次索引
 
 ```bash
 cd /your/project
-bash /path/to/skill/scripts/index.sh   # = hce-cli sync，首次全量、之后增量
+hce-cli sync     # 首次全量、之后增量
 ```
-之后 `search.sh` 会自动先增量 sync 再检索，通常无需手动 index。
-
-## 配置加载顺序
-
-`scripts/_common.sh` 先 source 同目录 `config.sh`（若存在），再读环境变量。
-因此命令行临时 `export HCE_BASE_URL=...` 与 `config.sh` 等效，命令行当次生效。
+之后 `hce-cli search` 会自动先增量 sync 再检索，通常无需手动 sync。

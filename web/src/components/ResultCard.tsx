@@ -79,7 +79,7 @@ export function ResultCard({ r, rank, collapsed, onToggleCollapse }: Props) {
           className="flex min-w-0 flex-1 items-baseline gap-0.5 text-left"
         >
           {dir && <span className="truncate text-sm text-muted-foreground">{dir}</span>}
-          <span className={cn("shrink-0 text-sm font-semibold", copiedPath ? "text-emerald-500" : "text-blue-600 dark:text-blue-400")}>
+          <span className={cn("shrink-0 font-mono text-sm font-semibold", copiedPath ? "text-emerald-500" : "text-brand")}>
             {file}
           </span>
           {copiedPath && <Check className="size-3 shrink-0 text-emerald-500" />}
@@ -94,7 +94,7 @@ export function ResultCard({ r, rank, collapsed, onToggleCollapse }: Props) {
         </span>
         <div className="flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
           <Button variant="ghost" size="icon-sm" aria-label="切换自动换行" title="自动换行"
-            onClick={() => setWrap((w) => !w)} className={cn(wrap && "text-blue-600 dark:text-blue-400")}>
+            onClick={() => setWrap((w) => !w)} className={cn(wrap && "text-brand")}>
             <WrapText />
           </Button>
           <Button variant="ghost" size="icon-sm" aria-label="复制代码片段" title="复制代码片段" onClick={copyCode}>
@@ -105,7 +105,7 @@ export function ResultCard({ r, rank, collapsed, onToggleCollapse }: Props) {
 
       {!collapsed && (
         <div className="relative">
-          <pre className="overflow-x-auto bg-zinc-950 font-mono text-[13px] leading-relaxed text-zinc-200">
+          <pre className="bg-code overflow-x-auto font-mono text-[13px] leading-relaxed text-zinc-200">
             <code className="block py-3">
               {visible.map((toks, j) => (
                 <div key={j} className="flex hover:bg-white/[0.04]">
@@ -124,12 +124,12 @@ export function ResultCard({ r, rank, collapsed, onToggleCollapse }: Props) {
           {long && (
             <>
               {!expanded && (
-                <div className="pointer-events-none absolute inset-x-0 bottom-9 h-14 bg-gradient-to-t from-zinc-950 to-transparent" />
+                <div className="pointer-events-none absolute inset-x-0 bottom-9 h-14 bg-gradient-to-t from-[oklch(0.145_0.014_264)] to-transparent" />
               )}
               <button
                 type="button"
                 onClick={() => setExpanded((e) => !e)}
-                className="block w-full border-t border-white/5 bg-zinc-950 py-2 text-center text-xs font-medium text-zinc-400 transition-colors hover:text-zinc-100"
+                className="bg-code block w-full border-t border-white/5 py-2 text-center text-xs font-medium text-zinc-400 transition-colors hover:text-zinc-100"
               >
                 {expanded ? "收起代码" : `展开剩余 ${lines.length - CLAMP_LINES} 行`}
               </button>
