@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -89,6 +90,9 @@ func main() {
 }
 
 func initEmbedding(cfg *config.Config) (embedding.Embedding, error) {
+	if err := validateEmbeddingKey(cfg.Embedding); err != nil {
+		return nil, err
+	}
 	switch cfg.Embedding.Provider {
 	case "openai":
 		return embedding.NewOpenAIEmbedding(embedding.OpenAIConfig{
@@ -114,6 +118,36 @@ func initEmbedding(cfg *config.Config) (embedding.Embedding, error) {
 			APIKey: cfg.Embedding.APIKey, Model: cfg.Embedding.Model, BaseURL: cfg.Embedding.BaseURL,
 		}), nil
 	}
+}
+
+// validateEmbeddingKey 在启动期校验所选供应商是否拿到了必需的 API key。
+// 不做这层校验时：缺 key 也能照常起服务、/health 正常、Web UI 能打开，
+// 直到首次 sync/search 才在上游报一个看不懂的 401/403。这里把那种「晚失败」
+// 提前成一条可操作的启动错误。自托管 OpenAI 兼容端点（配了 base_url）与 ollama 不需要 key。
+func validateEmbeddingKey(e config.EmbeddingConfig) error {
+	needsKey := false
+	switch e.Provider {
+	case "gemini", "voyageai":
+		needsKey = true
+	case "ollama":
+		needsKey = false
+	default:
+		// openai 及未知供应商都会走 OpenAI 实现；配了自定义 base_url 视为自托管，免 key。
+		needsKey = e.BaseURL == ""
+	}
+	if needsKey && e.APIKey == "" {
+		name := e.Provider
+		if name == "" {
+			name = "openai"
+		}
+		return fmt.Errorf(
+			"供应商 %q 需要 API key，但 HCE_EMBEDDING_API_KEY 为空：\n"+
+				"  · docker compose：把 key 填进项目根的 .env（参考 .env.example），再 `make up`\n"+
+				"  · 源码运行：export HCE_EMBEDDING_API_KEY=<your-key>\n"+
+				"  · 想零密钥本地试用：设 HCE_EMBEDDING_PROVIDER=ollama（需本地装 Ollama，见 README）",
+			name)
+	}
+	return nil
 }
 
 func initVectorDB(ctx context.Context, cfg *config.Config) (vectordb.VectorDB, error) {
