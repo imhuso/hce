@@ -56,10 +56,18 @@ hce-cli config --base-url https://hce.example.com/api/v1
 - "不同项目"：项目级 `.hce/config.json` 覆盖全局默认。
 - 查看当前生效配置与优先级：`hce-cli config`（无参）。
 
-## 4. 首次索引
+## 4. 连通性自检 + 首次索引
+
+先自检（一条命令含后端探活，并自动生成 `.hce/config.json`，无需手动建文件）：
 
 ```bash
 cd /your/project
+hce-cli status   # 看 base_url 后的「在线 / 离线」；离线先回到第 2 步改地址
+```
+
+确认在线后首次索引：
+
+```bash
 hce-cli sync     # 首次全量、之后增量
 ```
 之后 `hce-cli search` 会自动先增量 sync 再检索，通常无需手动 sync。
