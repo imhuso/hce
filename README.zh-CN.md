@@ -121,6 +121,43 @@ hce version                    # 显示版本
 
 ---
 
+## 🤖 配合 Claude Code 使用
+
+HCE 自带一个 [Claude Code](https://www.anthropic.com/claude-code) **skill**(`.claude/skills/hce`):用自然语言问代码，agent 自动帮你跑 `hce search`，不用记命令；第一次用还会引导你完成接入。
+
+### 快速安装 —— 让 AI 帮你装
+
+把下面这段贴给 Claude Code，它会自动取 skill、装 CLI 并配置好：
+
+```text
+帮我装好 HCE 语义代码检索：
+1. 装 CLI：执行 `go install github.com/imhuso/hce/cmd/hce@latest`（或从
+   https://github.com/imhuso/hce/releases 下对应平台二进制放进 PATH），用 `hce version` 验证。
+2. 装 skill：把 https://github.com/imhuso/hce 里的 `.claude/skills/hce` 复制到
+   `~/.claude/skills/hce`。
+3. 配后端：问我 HCE 后端在哪（本机 docker / 局域网 IP / 公网域名），再执行
+   `hce config --base-url <url>`；我要是还没有后端，就告诉我在 hce 仓库里跑 `make up`。
+4. 索引当前项目：执行 `hce sync`，再用一条 `hce search` 验证可用。
+完成后告诉我 codebase_id、生效的后端地址、已索引文件数。
+```
+
+### 手动安装
+
+```bash
+go install github.com/imhuso/hce/cmd/hce@latest      # CLI（详见上文「安装 CLI」）
+cp -r .claude/skills/hce ~/.claude/skills/hce        # skill — 全局，任意项目可用
+# 或拷进 <你的项目>/.claude/skills/hce 只在该项目生效
+```
+
+然后在 Claude Code 里直接用自然语言问：
+
+> 订单收货人手机号脱敏在哪里处理？
+> JWT 校验拦截器怎么实现的？
+
+skill 会在「xx 在哪 / 怎么实现」这类问题上自动触发（也可用 `/hce` 显式调用），先增量 sync 再返回相关片段。危险操作（`hce clear` / 全量重建）一律先征得你同意。
+
+---
+
 ## ⚙️ 配置
 
 服务端配置在 `configs/config.yaml`，**敏感信息一律通过环境变量注入，不要写进 yaml**（会进 git）。
@@ -185,7 +222,7 @@ docs/legacy/
 
 ```
 ┌─────────────────────────┐         push（仅变更文件内容）        ┌──────────────────────────────┐
-│        hce          │  ───────────────────────────────▶   │          hce-server          │
+│        hce              │  ───────────────────────────────▶   │          hce-server          │
 │  （本地，持有源码）       │   POST /index/upsert  /delete       │  切分 → 去重 → embedding →    │
 │                         │   POST /index/flush                 │  写入 Milvus → 混合检索        │
 │  scan → diff → 批量推送  │  ◀───────────────────────────────   │                              │

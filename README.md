@@ -121,6 +121,45 @@ hce version                    # print version
 
 ---
 
+## 🤖 Use with Claude Code
+
+HCE ships a [Claude Code](https://www.anthropic.com/claude-code) **skill** (`.claude/skills/hce`): ask about your code in plain language and the agent runs `hce search` for you — no commands to memorize. The first time around, it also walks you through setup.
+
+### Quick install — let the AI do it
+
+Paste this into Claude Code; it will fetch the skill, install the CLI, and wire everything up:
+
+```text
+Set up HCE semantic code search for me:
+1. Install the CLI: run `go install github.com/imhuso/hce/cmd/hce@latest` (or download
+   a binary from https://github.com/imhuso/hce/releases and put it on PATH); verify with
+   `hce version`.
+2. Install the skill: copy `.claude/skills/hce` from https://github.com/imhuso/hce into
+   `~/.claude/skills/hce`.
+3. Point me at a server: ask where my HCE backend is (local docker / LAN IP / public
+   domain) and run `hce config --base-url <url>`. If I don't have one, tell me to run
+   `make up` in the hce repo.
+4. Index this project: run `hce sync`, then confirm with a sample `hce search`.
+Report the codebase_id, the effective server URL, and the indexed file count when done.
+```
+
+### Manual install
+
+```bash
+go install github.com/imhuso/hce/cmd/hce@latest      # CLI (see "Install the CLI" above)
+cp -r .claude/skills/hce ~/.claude/skills/hce        # skill — global, usable in any project
+# or drop it in <your-project>/.claude/skills/hce for that project only
+```
+
+Then just ask Claude Code in natural language:
+
+> where is the order recipient's phone number masked?
+> how is the JWT validation interceptor implemented?
+
+The skill triggers automatically on "where is X / how is X implemented" questions (or call it explicitly with `/hce`), runs an incremental sync, and returns the relevant snippets. Destructive ops (`hce clear` / full rebuild) always confirm with you first.
+
+---
+
 ## ⚙️ Configuration
 
 Server config lives in `configs/config.yaml`. **Always inject secrets via environment variables — never put them in the yaml** (it's committed to git).
@@ -185,7 +224,7 @@ Commit `.hceignore` to share the same indexing scope across your team.
 
 ```
 ┌─────────────────────────┐      push (changed file content only)   ┌──────────────────────────────┐
-│        hce          │  ───────────────────────────────────▶   │          hce-server          │
+│        hce              │  ───────────────────────────────────▶   │          hce-server          │
 │   (local, holds source) │   POST /index/upsert  /delete           │  chunk → dedup → embedding → │
 │                         │   POST /index/flush                     │  write Milvus → hybrid search│
 │  scan → diff → push     │  ◀───────────────────────────────────   │                              │
