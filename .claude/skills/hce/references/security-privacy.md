@@ -1,7 +1,7 @@
 # Security & Privacy
 
-- **源码不出本机**：push 模式，`hce` 在本机扫描，只把变更文件内容发到 hce-server，服务端不读你的磁盘。
-- **embedding 会把代码切块发给所选供应商**计算向量（用 ollama / LM Studio 等自托管模型可全程不出内网）。供应商凭据配在**服务端** `.env`（gitignore），勿提交。
-- **连公网后端**意味着代码内容经公网传输——确认后端可信、走 HTTPS、端点加鉴权。
-- **客户端落地**：`hce` 在项目根写 `.hce/`（codebase 配置 + 本地 state），在项目 `.gitignore` 忽略 `.hce/`。全局地址存 `~/.hce/config.json`，仅含 URL。
-- **输出克制**：检索结果只保留相关、精简的片段，别把敏感信息回显到用户可见输出。
+- **Source never leaves your machine**: push model — `hce` scans locally and only sends changed-file content to hce-server; the server never reads your disk.
+- **Embedding sends code chunks to the chosen provider** to compute vectors (using self-hosted models like ollama / LM Studio keeps everything inside your network). Provider credentials live in the **server's** `.env` (gitignored) — don't commit them.
+- **Connecting to a public backend** means code content travels over the public internet — make sure the backend is trusted, use HTTPS, and add auth on the endpoints.
+- **Client-side footprint**: `hce` writes `.hce/` at the project root (codebase config + local state); ignore `.hce/` in the project `.gitignore`. The global address is stored in `~/.hce/config.json`, which contains only the URL.
+- **Restrained output**: keep only relevant, concise snippets from search results; don't echo sensitive information into user-visible output.

@@ -1,8 +1,8 @@
 # Examples
 
 ```bash
-hce search "订单收货人手机号脱敏在哪里处理" -k 10
-hce search "用户登录鉴权逻辑在哪个文件" -k 15
+hce search "where is the order recipient's phone number masked" -k 10
+hce search "which file contains the user login auth logic" -k 15
 hce search "where the order number uniqueness is validated" -f json
-HCE_BASE_URL="https://hce.example.com/api/v1" hce search "支付回调验签"   # 一次性切后端
+HCE_BASE_URL="https://hce.example.com/api/v1" hce search "payment callback signature verification"   # one-off backend switch
 ```

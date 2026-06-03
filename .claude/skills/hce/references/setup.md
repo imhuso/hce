@@ -1,27 +1,27 @@
-# Setup：装 hce + 配服务端地址
+# Setup: install hce + configure the server address
 
-本 skill 直接驱动 `hce`，无脚本。需要：可达的 **hce-server 后端** + PATH 里的 **hce** 二进制。
+This skill drives `hce` directly, with no scripts. It needs: a reachable **hce-server backend** + the **hce** binary on PATH.
 
-## 1. 装 hce（单一跨平台二进制，无需 CGO）
+## 1. Install hce (single cross-platform binary, no CGO needed)
 
 ```bash
-go install github.com/imhuso/hce/cmd/hce@latest   # 有 Go：装到 ~/go/bin
-# 或下载预编译：gh release download --repo imhuso/hce --pattern '*linux_amd64*'，解压放进 PATH
-# 或源码编译：go build -o hce ./cmd/hce && sudo mv hce /usr/local/bin/
-hce version   # 验证
+go install github.com/imhuso/hce/cmd/hce@latest   # with Go: installs to ~/go/bin
+# or download a prebuilt binary: gh release download --repo imhuso/hce --pattern '*linux_amd64*', extract, and put it on PATH
+# or build from source: go build -o hce ./cmd/hce && sudo mv hce /usr/local/bin/
+hce version   # verify
 ```
 
-## 2. 后端从哪来（决定服务端地址）
+## 2. Where the backend comes from (determines the server address)
 
-- **本机自起（默认）**：在 hce 仓库 `cp .env.example .env` 填 `HCE_EMBEDDING_API_KEY`，`docker compose up -d`（etcd+minio+milvus+server+web）。后端 9527、前端/反代 9528，默认走 9528 无需配地址。
-- **局域网共享**：某机起栈，其他人连其内网 IP：`hce config --base-url http://192.168.1.50:9528/api/v1`。
-- **公网域名**：把 9528 反代到域名（建议 HTTPS + 鉴权）：`hce config --base-url https://hce.example.com/api/v1`。
+- **Self-hosted locally (default)**: in the hce repo, `cp .env.example .env` and fill in `HCE_EMBEDDING_API_KEY`, then `docker compose up -d` (etcd+minio+milvus+server+web). Backend on 9527, frontend/reverse-proxy on 9528; the default goes through 9528, so no address config is needed.
+- **LAN-shared**: one machine runs the stack, others connect via its LAN IP: `hce config --base-url http://192.168.1.50:9528/api/v1`.
+- **Public domain**: reverse-proxy 9528 to a domain (HTTPS + auth recommended): `hce config --base-url https://hce.example.com/api/v1`.
 
-## 3. 地址分层解析（高 → 低优先级）
+## 3. Address resolution layers (high → low priority)
 
-1. `--base-url` 旗标 / `HCE_BASE_URL` 环境变量（一次性 / CI）
-2. 项目 `<项目>/.hce/config.json` 的 `base_url`（某项目要连别的后端）
-3. 全局 `~/.hce/config.json`（`hce config --base-url` 写入，机器级默认）
-4. 内置默认 `http://localhost:9528/api/v1`
+1. `--base-url` flag / `HCE_BASE_URL` env var (one-off / CI)
+2. project `<project>/.hce/config.json`'s `base_url` (a project that needs a different backend)
+3. global `~/.hce/config.json` (written by `hce config --base-url`, machine-level default)
+4. built-in default `http://localhost:9528/api/v1`
 
-各用户 `~/.hce/` 天然隔离；项目级覆盖全局。查看当前生效配置：`hce config`（无参）。
+Each user's `~/.hce/` is naturally isolated; project-level overrides global. View the currently effective config: `hce config` (no args).

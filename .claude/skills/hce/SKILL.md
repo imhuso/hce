@@ -1,32 +1,32 @@
 ---
 name: hce
 description: |
-  代码语义检索 + 首次接入引导：在当前项目用自然语言定位代码（实现逻辑 / 在哪个文件 / 哪里处理）；首次使用时引导初始化（自检连通、配地址、首次索引）。
-  优先用 hce search；精确字面匹配用 grep/rg。【强制】hce clear / 全量重建须用户明确同意（重算 embedding 费 token），增量 sync 不限。
-  触发词：哪里、在哪、怎么实现的、哪个文件、哪里处理、哪里定义、哪里用到了；初始化、接入、配置 hce、连不上、后端地址
+  Semantic code search + first-time onboarding: locate code in the current project using natural language (how something is implemented / which file / where it's handled); guide initialization on first use (connectivity self-check, configure address, first index).
+  Prefer hce search; use grep/rg for exact literal matches. [MANDATORY] hce clear / full rebuild requires explicit user consent (re-computing embeddings costs tokens); incremental sync is unrestricted.
+  Triggers: where, where is, how is it implemented, which file, where is it handled, where is it defined, where is it used; initialize, onboard, configure hce, can't connect, backend address
 ---
 
-# HCE 代码语义检索
+# HCE Semantic Code Search
 
-项目目录内执行（自动找项目根，默认先增量 sync 再检索）：
+Run inside the project directory (auto-detects the project root; by default does an incremental sync first, then searches):
 
 ```bash
-hce search "<完整一句话描述意图>" -k 10
+hce search "<a full sentence describing your intent>" -k 10
 ```
 
-- 查询用**完整一句话**（如"订单收货人手机号脱敏在哪处理"），别用单词，召回更准；不全就把 `-k` 调到 15-20。
-- stdout **原样回显**给用户；报错（多为 hce 不在 PATH 或后端不可达）据 stderr 告知，排查见 `references/setup.md`。
+- Phrase the query as a **full sentence** (e.g. "where is the order recipient's phone number masked"), not single words — recall is more accurate. If results are incomplete, raise `-k` to 15-20.
+- stdout is **echoed verbatim** to the user; on error (usually hce not on PATH or backend unreachable) report based on stderr — troubleshooting in `references/setup.md`.
 
-## 首次接入
+## First-time onboarding
 
-新项目第一次用，或用户说"初始化 / 接入 / 连不上"时，跑 `hce status` 自检——输出 项目根 / codebase_id / base_url **+ 在线·离线** / 已索引数（`.hce/config.json` 首次运行自动生成，无需手动建）：
+On a new project's first use, or when the user says "initialize / onboard / can't connect", run `hce status` as a self-check — it outputs project root / codebase_id / base_url **+ online·offline** / indexed count (`.hce/config.json` is auto-generated on first run; no need to create it manually):
 
-- **离线** → **先问用户后端在哪**（本机 docker / 局域网 IP / 公网域名），别默认其已起本机栈；再 `hce config --base-url <url>`。装 CLI / 配地址见 `references/setup.md`。
-- **在线无索引** → `hce sync` 首次索引后再 search。
-- **在线有索引** → 直接 search。
+- **Offline** → **ask the user where the backend is first** (local docker / LAN IP / public domain); don't assume they've started the local stack. Then `hce config --base-url <url>`. Installing the CLI / configuring the address: see `references/setup.md`.
+- **Online, no index** → `hce sync` for the first index, then search.
+- **Online, indexed** → search directly.
 
-## References（按需加载）
-- `setup.md`：装 hce + 配服务端地址（分层 JSON）+ 连通性自检
-- `contract.schema.md`：命令速查 / 退出码
-- `examples.catalog.md`：查询示例
-- `security-privacy.md`：隐私边界
+## References (load on demand)
+- `setup.md`: install hce + configure the server address (layered JSON) + connectivity self-check
+- `contract.schema.md`: command cheatsheet / exit codes
+- `examples.catalog.md`: query examples
+- `security-privacy.md`: privacy boundaries
