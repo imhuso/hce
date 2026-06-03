@@ -80,7 +80,7 @@ jobs:
           done
 
           {
-            add() { [ -s "/tmp/cl/$1" ] && { printf '### %s\n\n' "$2"; cat "/tmp/cl/$1"; printf '\n'; }; }
+            add() { [ -s "/tmp/cl/$1" ] && { printf '### %s\n\n' "$2"; cat "/tmp/cl/$1"; printf '\n'; }; return 0; }  # 空分组返回 0，避免 bash -e 下退出
             add feat '🚀 Features'
             add fix '🐛 Bug Fixes'
             add perf '⚡ Performance'
