@@ -33,3 +33,9 @@ configs/config.*.local.yaml
 
 # 本地编译的 CLI 二进制
 /bin/
+
+# 服务端运行时数据（codebase 映射表等）
+/data/
+
+# HCE skill 的本地配置（仅含 URL/路径，按机器填，不入库）
+.claude/skills/*/config.sh

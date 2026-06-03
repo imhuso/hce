@@ -19,6 +19,7 @@ export interface IndexInfo {
   codebase_id: string;
   collection: string;
   num_chunks: number;
+  languages?: Record<string, number>;
 }
 
 export async function searchCode(

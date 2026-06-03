@@ -58,7 +58,8 @@ func Scan(root string, opts ScanOptions) ([]FileEntry, error) {
 	}
 
 	patterns := append([]string(nil), defaultIgnorePatterns()...)
-	patterns = append(patterns, loadGitignore(root)...)
+	patterns = append(patterns, loadIgnoreFile(root, ".gitignore")...)
+	patterns = append(patterns, loadIgnoreFile(root, ".hceignore")...)
 
 	var out []FileEntry
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
@@ -98,8 +99,9 @@ func Scan(root string, opts ScanOptions) ([]FileEntry, error) {
 	return out, err
 }
 
-func loadGitignore(root string) []string {
-	f, err := os.Open(filepath.Join(root, ".gitignore"))
+// loadIgnoreFile 读取 root 下的忽略文件（.gitignore / .hceignore），返回非空非注释行
+func loadIgnoreFile(root, name string) []string {
+	f, err := os.Open(filepath.Join(root, name))
 	if err != nil {
 		return nil
 	}
@@ -118,18 +120,12 @@ func loadGitignore(root string) []string {
 
 func shouldIgnoreDir(patterns []string, relPathSlash string) bool {
 	dirName := pathBase(relPathSlash)
+	// 点开头目录（.git/.idea/.next/.venv 等）一律跳过
 	if strings.HasPrefix(dirName, ".") && dirName != "." {
 		return true
 	}
-	for _, raw := range patterns {
-		p := strings.TrimSuffix(strings.TrimSuffix(raw, "/"), "/**")
-		if p == dirName {
-			return true
-		}
-		if strings.HasPrefix(relPathSlash, p+"/") || relPathSlash == p {
-			return true
-		}
-		if matched, _ := filepath.Match(p, dirName); matched {
+	for _, p := range patterns {
+		if patternMatch(p, relPathSlash) {
 			return true
 		}
 	}
@@ -137,16 +133,68 @@ func shouldIgnoreDir(patterns []string, relPathSlash string) bool {
 }
 
 func shouldIgnoreFile(patterns []string, relPathSlash string) bool {
-	name := pathBase(relPathSlash)
 	for _, p := range patterns {
-		if matched, _ := filepath.Match(p, name); matched {
-			return true
-		}
-		if matched, _ := filepath.Match(p, relPathSlash); matched {
+		if patternMatch(p, relPathSlash) {
 			return true
 		}
 	}
 	return false
+}
+
+// patternMatch 判断忽略规则是否命中相对路径（gitignore 实用子集）：
+// 单段匹配任意层级一段；多段从任意起点前缀对齐；前导 / 锚定根；** 跨目录。
+func patternMatch(pattern, path string) bool {
+	raw := strings.TrimSpace(pattern)
+	anchored := strings.HasPrefix(raw, "/")
+	p := normalizePattern(raw)
+	if p == "" {
+		return false
+	}
+	pSegs := strings.Split(p, "/")
+	tSegs := strings.Split(path, "/")
+	if anchored {
+		return matchSegs(pSegs, tSegs)
+	}
+	for start := 0; start <= len(tSegs); start++ {
+		if matchSegs(pSegs, tSegs[start:]) {
+			return true
+		}
+	}
+	return false
+}
+
+// matchSegs 把 p 段序列从 t 开头对齐；p 耗尽即命中（t 可有剩余 = 目录前缀）
+func matchSegs(p, t []string) bool {
+	for len(p) > 0 {
+		if p[0] == "**" {
+			if len(p) == 1 {
+				return true
+			}
+			for i := 0; i <= len(t); i++ {
+				if matchSegs(p[1:], t[i:]) {
+					return true
+				}
+			}
+			return false
+		}
+		if len(t) == 0 {
+			return false
+		}
+		if ok, _ := filepath.Match(p[0], t[0]); !ok {
+			return false
+		}
+		p, t = p[1:], t[1:]
+	}
+	return true
+}
+
+// normalizePattern 去掉首尾空白、前导 / 与尾部 / 和 /**
+func normalizePattern(raw string) string {
+	p := strings.TrimSpace(raw)
+	p = strings.TrimPrefix(p, "/")
+	p = strings.TrimSuffix(p, "/**")
+	p = strings.TrimSuffix(p, "/")
+	return p
 }
 
 func pathBase(p string) string {

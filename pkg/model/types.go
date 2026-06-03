@@ -54,7 +54,8 @@ type UpsertResult struct {
 
 // IndexInfo 已索引项目摘要（list 用）
 type IndexInfo struct {
-	CodebaseID string `json:"codebase_id"`
-	Collection string `json:"collection"`
-	NumChunks  int64  `json:"num_chunks"`
+	CodebaseID string           `json:"codebase_id"`
+	Collection string           `json:"collection"`
+	NumChunks  int64            `json:"num_chunks"`
+	Languages  map[string]int64 `json:"languages,omitempty"` // 语言 → chunk 数（搜过一次后才有）
 }

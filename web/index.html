@@ -1,10 +1,22 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>web</title>
+    <meta name="description" content="HCE — 代码语义检索：用自然语言搜索你已索引的代码库。" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)" />
+    <title>HCE · 代码语义检索</title>
+    <script>
+      // Apply the saved color theme before first paint to avoid a flash.
+      try {
+        var t = localStorage.getItem('hce.theme');
+        var dark = t === 'dark' ||
+          ((!t || t === 'system') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        if (dark) document.documentElement.classList.add('dark');
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

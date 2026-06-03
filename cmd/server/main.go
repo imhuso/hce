@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
@@ -48,11 +49,16 @@ func main() {
 	sp := splitter.NewTreeSitterSplitter(cfg.Splitter.MaxChunkSize, cfg.Splitter.ChunkOverlap)
 	log.Printf("[Main] ✂️ Splitter: tree-sitter (支持 %d 种语言)", len(sp.SupportedLanguages()))
 
+	dataDir := os.Getenv("HCE_DATA_DIR")
+	if dataDir == "" {
+		dataDir = "data"
+	}
 	idx := indexer.NewIndexer(indexer.IndexerConfig{
 		Splitter:      sp,
 		Embedding:     emb,
 		VectorDB:      vdb,
 		MinChunkBytes: cfg.Splitter.MinChunkBytes,
+		RegistryPath:  filepath.Join(dataDir, "codebases.json"),
 	})
 
 	router := api.NewRouter(idx)

@@ -80,9 +80,13 @@ services:
       HCE_EMBEDDING_API_KEY: "${HCE_EMBEDDING_API_KEY:-}"
       HCE_EMBEDDING_BASE_URL: "${HCE_EMBEDDING_BASE_URL:-}"
       HCE_EMBEDDING_DIM: "${HCE_EMBEDDING_DIM:-}"
+      # collection→codebase_id 映射的持久化目录
+      HCE_DATA_DIR: "/app/data"
     volumes:
       # 配置目录（只读挂载，运行时不会被改）
       - ./configs:/app/configs:ro
+      # 可写数据目录（codebase 映射表等运行时状态）
+      - hce_data:/app/data
     # 不对外暴露后端端口；前端容器通过内网 hce-server:9527 反代访问
     expose:
       - "9527"
@@ -110,3 +114,4 @@ volumes:
   etcd_data:
   minio_data:
   milvus_data:
+  hce_data:

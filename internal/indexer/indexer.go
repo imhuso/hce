@@ -35,6 +35,9 @@ type Indexer struct {
 	kwMu      sync.Mutex
 	kwIndexes map[string]*keyword.Index
 	kwLoaded  map[string]bool
+
+	// collection → codebase_id 映射，让 /indexes 能暴露可读 id。
+	registry *codebaseRegistry
 }
 
 // IndexerConfig 索引器配置
@@ -42,7 +45,8 @@ type IndexerConfig struct {
 	Splitter      splitter.Splitter
 	Embedding     embedding.Embedding
 	VectorDB      vectordb.VectorDB
-	MinChunkBytes int // 过滤掉小于此长度的 chunk（0 = 不过滤）
+	MinChunkBytes int    // 过滤掉小于此长度的 chunk（0 = 不过滤）
+	RegistryPath  string // collection→codebase_id 映射的持久化路径（空 = 仅内存）
 }
 
 const collectionPrefix = "hce_"
@@ -57,6 +61,7 @@ func NewIndexer(cfg IndexerConfig) *Indexer {
 		colLocks:      make(map[string]*sync.Mutex),
 		kwIndexes:     make(map[string]*keyword.Index),
 		kwLoaded:      make(map[string]bool),
+		registry:      newCodebaseRegistry(cfg.RegistryPath),
 	}
 }
 
@@ -89,13 +94,21 @@ func (idx *Indexer) ensureKwLoaded(ctx context.Context, collection string) error
 	// TODO: 超 16K chunks 的项目要做 PK 分页迭代
 	const pageSize = 16000
 	rows, err := idx.vectorDB.Query(ctx, collection, "id != \"\"",
-		[]string{"id", "content"}, pageSize)
+		[]string{"id", "content", "language"}, pageSize)
 	if err != nil {
 		return fmt.Errorf("加载 keyword 索引失败: %w", err)
 	}
+	// 顺便统计语言分布（这是唯一的全量扫描点，零额外开销），供 /indexes 展示。
+	langCount := make(map[string]int64)
 	for _, r := range rows {
 		ki.Add(r.ID, r.Content)
+		lang := r.Language
+		if lang == "" {
+			lang = "other"
+		}
+		langCount[lang]++
 	}
+	idx.registry.recordLanguages(collection, langCount)
 	loaded := len(rows)
 
 	idx.kwMu.Lock()
@@ -249,6 +262,7 @@ func (idx *Indexer) IndexFiles(ctx context.Context, codebaseID string, files []m
 	}
 
 	collection := CollectionName(codebaseID)
+	idx.registry.record(collection, codebaseID)
 	t0 := time.Now()
 	log.Printf("[Indexer] 📥 收到 upsert  codebase=%s  文件=%d  集合=%s", codebaseID, len(files), collection)
 
@@ -509,6 +523,8 @@ func (idx *Indexer) Search(ctx context.Context, codebaseID, query string, topK i
 	if !exists {
 		return nil, fmt.Errorf("codebase_id %q 尚未索引", codebaseID)
 	}
+	// 集合确实存在 → 记下可读 id（即使后续向量检索失败也已落库，便于前端命名/管理）。
+	idx.registry.record(collection, codebaseID)
 	if topK <= 0 {
 		topK = 5
 	}
@@ -665,7 +681,11 @@ func (idx *Indexer) Clear(ctx context.Context, codebaseID string) error {
 	lock := idx.lockFor(collection)
 	lock.Lock()
 	defer lock.Unlock()
-	return idx.vectorDB.DropCollection(ctx, collection)
+	if err := idx.vectorDB.DropCollection(ctx, collection); err != nil {
+		return err
+	}
+	idx.registry.remove(collection)
+	return nil
 }
 
 // ListIndexes 列出所有 HCE 集合（按 collection 名前缀过滤）
@@ -677,9 +697,10 @@ func (idx *Indexer) ListIndexes(ctx context.Context) ([]model.IndexInfo, error) 
 	out := make([]model.IndexInfo, 0, len(cols))
 	for _, c := range cols {
 		out = append(out, model.IndexInfo{
-			CodebaseID: "", // 出于隐私 / 无可逆映射，list 时只暴露 collection 名 + chunk 数
+			CodebaseID: idx.registry.lookup(c.Name), // 搜过/同步过的集合有可读 id，否则为空（匿名）
 			Collection: c.Name,
 			NumChunks:  c.NumChunks,
+			Languages:  idx.registry.lookupLanguages(c.Name), // 搜过一次后才有
 		})
 	}
 	return out, nil
