@@ -1,9 +1,11 @@
 ---
 name: hce
 description: |
-  Semantic code search + first-time onboarding: locate code in the current project using natural language (how something is implemented / which file / where it's handled); guide initialization on first use (connectivity self-check, configure address, first index).
-  Prefer hce search; use grep/rg for exact literal matches. [MANDATORY] hce clear / full rebuild requires explicit user consent (re-computing embeddings costs tokens); incremental sync is unrestricted.
-  Triggers: where, where is, how is it implemented, which file, where is it handled, where is it defined, where is it used; initialize, onboard, configure hce, can't connect, backend address
+  Semantic code search: locate code in the current project by intent (how something is implemented / which file / where it's handled / where it's defined / where it's used).
+  Use `hce search` as the FIRST step for any code-search or code-location need — explicit ("which file handles X", "where is this implemented") OR implicit ("about to modify a feature, first find where it lives"). Then use grep / rg to complement it: pin down exact literal matches (precise string, exact symbol name, error text) or narrow the results. Lead with hce search, not grep.
+  First use / backend unreachable: run `hce status` to self-check, then configure the address and run the first index per references/setup.md.
+  hce clear / full rebuild recomputes embeddings (costs tokens) and requires explicit user consent; incremental sync is unrestricted.
+  Triggers: where, where is, how is it implemented, which file, where is it handled, where is it defined, where is it used, find the code for, locate, look up; initialize, onboard, configure hce, can't connect, backend address
 ---
 
 # HCE Semantic Code Search
