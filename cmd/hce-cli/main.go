@@ -36,7 +36,7 @@ const usage = `hce-cli — HCE 代码语义检索客户端
   --base-url <url>   覆盖服务端地址（优先级：旗标 > HCE_BASE_URL > 项目 .hce/config.json > 全局 ~/.hce/config.json > 默认）
 
 search 选项:
-  -k <int>           top_k，默认 5
+  -k <int>           top_k，默认 10
   -f text|json       输出格式，默认 text
   --no-sync          跳过 sync，仅做搜索
 `

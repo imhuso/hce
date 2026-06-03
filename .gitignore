@@ -21,6 +21,10 @@ Thumbs.db
 # 环境配置（不要提交含密钥的配置）
 .env
 .env.*
+!.env.example
+
+# 本地 Claude Code 个人配置
+.claude/settings.local.json
 
 # 本地配置覆盖
 configs/config.local.yaml
