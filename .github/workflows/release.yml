@@ -15,6 +15,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # 需要完整历史 + tag 才能算出两个版本间的 commit 范围
 
       - uses: actions/setup-go@v5
         with:
@@ -45,8 +47,58 @@ jobs:
           (cd dist && sha256sum * > checksums.txt)
           ls -lh dist
 
+      - name: 生成 changelog（按 Conventional Commits 分组）
+        env:
+          VERSION: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          # 取当前 tag 的上一个 tag；首个 release 则 prev 为空，统计全部历史
+          prev=$(git describe --tags --abbrev=0 "${VERSION}^" 2>/dev/null || true)
+          [ -n "$prev" ] && range="${prev}..${VERSION}" || range=""
+          echo "范围: ${range:-（首个 release，全部历史）}"
+
+          rm -rf /tmp/cl && mkdir -p /tmp/cl
+          # 把每条 commit 按类型分桶（feat/fix/perf/refactor/docs/其他）
+          git log --no-merges --reverse --pretty=format:'%s|%h' $range | \
+          while IFS='|' read -r subj hash; do
+            type=$(printf '%s' "$subj" | sed -nE 's/^([a-z]+)(\(.*\))?!?:.*/\1/p')
+            case "$type" in
+              feat) bucket=feat ;;
+              fix) bucket=fix ;;
+              perf) bucket=perf ;;
+              refactor) bucket=refactor ;;
+              docs) bucket=docs ;;
+              *)
+                # 跳过 bumpp 打的版本号提交，避免噪音
+                case "$subj" in chore:\ release*|chore\(release\)*|"release "*) continue ;; esac
+                bucket=other ;;
+            esac
+            scope=$(printf '%s' "$subj" | sed -nE 's/^[a-z]+\(([^)]+)\).*/\1/p')
+            desc=$(printf '%s' "$subj" | sed -E 's/^[a-z]+(\([^)]*\))?!?:[[:space:]]*//')
+            [ -n "$scope" ] && echo "- **${scope}**: ${desc} (${hash})" >> "/tmp/cl/$bucket" \
+                            || echo "- ${desc} (${hash})" >> "/tmp/cl/$bucket"
+          done
+
+          {
+            add() { [ -s "/tmp/cl/$1" ] && { printf '### %s\n\n' "$2"; cat "/tmp/cl/$1"; printf '\n'; }; }
+            add feat '🚀 Features'
+            add fix '🐛 Bug Fixes'
+            add perf '⚡ Performance'
+            add refactor '♻️ Refactoring'
+            add docs '📝 Documentation'
+            add other '🔧 Other Changes'
+            if [ -n "$prev" ]; then
+              printf '**Full Changelog**: https://github.com/%s/compare/%s...%s\n' "$REPO" "$prev" "$VERSION"
+            else
+              printf '**Full Changelog**: https://github.com/%s/commits/%s\n' "$REPO" "$VERSION"
+            fi
+          } > /tmp/RELEASE_NOTES.md
+
+          echo "----- 生成的 release notes -----"
+          cat /tmp/RELEASE_NOTES.md
+
       - name: 发布 Release
         uses: softprops/action-gh-release@v2
         with:
           files: dist/*
-          generate_release_notes: true
+          body_path: /tmp/RELEASE_NOTES.md
