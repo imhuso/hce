@@ -19,17 +19,17 @@ const defaultBaseURL = "http://localhost:9528/api/v1"
 // version 由发布构建经 ldflags 注入：-X main.version=<tag>；本地开发为 dev。
 var version = "dev"
 
-const usage = `hce-cli — HCE 代码语义检索客户端
+const usage = `hce — HCE 代码语义检索客户端
 
 用法:
-  hce-cli sync                              扫描并把变更推送到服务端
-  hce-cli search <query> [opts]             语义搜索（默认先 sync，--no-sync 跳过）
-  hce-cli status                            显示当前 codebase 配置 / 上次 sync
-  hce-cli list                              列出服务端所有已索引集合
-  hce-cli clear                             清除当前 codebase 的服务端索引
-  hce-cli init [--id <name>]                显式初始化 .hce/config.json
-  hce-cli config [--base-url <url>]         查看 / 设置全局服务端地址（~/.hce/config.json）
-  hce-cli version                           显示版本
+  hce sync                              扫描并把变更推送到服务端
+  hce search <query> [opts]             语义搜索（默认先 sync，--no-sync 跳过）
+  hce status                            显示当前 codebase 配置 / 上次 sync
+  hce list                              列出服务端所有已索引集合
+  hce clear                             清除当前 codebase 的服务端索引
+  hce init [--id <name>]                显式初始化 .hce/config.json
+  hce config [--base-url <url>]         查看 / 设置全局服务端地址（~/.hce/config.json）
+  hce version                           显示版本
 
 通用选项:
   -p <path>          指定项目根（默认从当前目录向上找 .hce 或 .git；都没有用当前目录）
@@ -74,7 +74,7 @@ func main() {
 	case "config":
 		os.Exit(cmdConfig(ctx, args))
 	case "version", "-v", "--version":
-		fmt.Printf("hce-cli %s\n", version)
+		fmt.Printf("hce %s\n", version)
 	case "-h", "--help", "help":
 		fmt.Print(usage)
 	default:
@@ -324,7 +324,7 @@ func cmdSearch(ctx context.Context, args []string) int {
 	fs.BoolVar(&noSync, "no-sync", false, "跳过 sync")
 	cf, rest := parseCommon(fs, args)
 	if len(rest) == 0 {
-		warn("用法: hce-cli search <query> [...]")
+		warn("用法: hce search <query> [...]")
 		return 2
 	}
 	query := strings.Join(rest, " ")
@@ -514,6 +514,6 @@ func cmdConfig(ctx context.Context, args []string) int {
 	fmt.Printf("  3. 项目 .hce/config.json 的 base_url\n")
 	fmt.Printf("  4. 全局 %s 的 base_url\n", path)
 	fmt.Printf("  5. 内置默认 %s\n", defaultBaseURL)
-	fmt.Printf("\n设置全局地址: hce-cli config --base-url http://<ip>:9528/api/v1\n")
+	fmt.Printf("\n设置全局地址: hce config --base-url http://<ip>:9528/api/v1\n")
 	return 0
 }

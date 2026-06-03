@@ -66,7 +66,7 @@ export function ConfirmDeleteDialog({ open, onOpenChange, codebaseId, numChunks,
                 {" 个 chunk）"}
               </>
             )}
-            。此操作<span className="font-semibold text-destructive">不可恢复</span>，重新索引需要再跑一遍 <code className="rounded bg-muted px-1 py-0.5 text-xs">hce-cli sync</code> 并重新 embedding。
+            。此操作<span className="font-semibold text-destructive">不可恢复</span>，重新索引需要再跑一遍 <code className="rounded bg-muted px-1 py-0.5 text-xs">hce sync</code> 并重新 embedding。
           </DialogDescription>
         </DialogHeader>
 

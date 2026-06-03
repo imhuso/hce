@@ -1,7 +1,7 @@
 name: release
 
-# bumpp 打出 vX.Y.Z tag 并推送后触发：交叉编译 hce-cli 五平台 + 发 GitHub Release。
-# hce-cli 是纯 Go 客户端（无 CGO），可在 ubuntu 上交叉编译所有平台。
+# bumpp 打出 vX.Y.Z tag 并推送后触发：交叉编译 hce 五平台 + 发 GitHub Release。
+# hce 是纯 Go 客户端（无 CGO），可在 ubuntu 上交叉编译所有平台。
 on:
   push:
     tags:
@@ -29,13 +29,13 @@ jobs:
           platforms="darwin/amd64 darwin/arm64 linux/amd64 linux/arm64 windows/amd64"
           for p in $platforms; do
             os=${p%/*}; arch=${p#*/}
-            out=hce-cli
-            [ "$os" = windows ] && out=hce-cli.exe
+            out=hce
+            [ "$os" = windows ] && out=hce.exe
             echo ">> $os/$arch"
             GOOS=$os GOARCH=$arch go build -trimpath \
               -ldflags "-s -w -X main.version=${VERSION}" \
-              -o "dist/$out" ./cmd/hce-cli
-            base="hce-cli_${VERSION}_${os}_${arch}"
+              -o "dist/$out" ./cmd/hce
+            base="hce_${VERSION}_${os}_${arch}"
             if [ "$os" = windows ]; then
               (cd dist && zip -q "${base}.zip" "$out" && rm "$out")
             else

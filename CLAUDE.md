@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## 项目概览
 
 HCE 是一个**代码语义检索引擎**，采用 **client-server + push 模式**：
-- **客户端（`hce-cli`）** 在本地扫描代码库、做增量 diff，只把变更文件的**内容**推送到服务端。客户端持有源码，服务端从不读文件系统。
+- **客户端（`hce`）** 在本地扫描代码库、做增量 diff，只把变更文件的**内容**推送到服务端。客户端持有源码，服务端从不读文件系统。
 - **服务端（`hce-server`）** 接收文件内容，负责切分（tree-sitter）、去重、向量化（embedding）、写入向量库（Milvus）和混合检索。一个 HTTP 服务面向多个 codebase，按 `codebase_id` 隔离到不同 Milvus collection。
 
 ## 常用命令
@@ -20,7 +20,7 @@ go run ./cmd/server -config configs/config.yaml
 CGO_ENABLED=1 CGO_CFLAGS="-Wno-null-character" go build -ldflags="-s -w" -o hce-server ./cmd/server/
 
 # 编译 CLI
-go build -o bin/hce-cli ./cmd/hce-cli/
+go build -o bin/hce ./cmd/hce/
 
 # 一键起全栈（etcd + minio + milvus + hce-server + hce-web）
 # 先 cp .env.example .env 填入 HCE_EMBEDDING_API_KEY
@@ -34,12 +34,12 @@ go build ./...
 ### CLI 用法
 
 ```bash
-hce-cli sync                       # 扫描并把变更推到服务端
-hce-cli search <query> [-k 10] [-f text|json] [--no-sync]   # 语义搜索（默认先 sync）
-hce-cli status                     # 当前 codebase 配置 / 上次 sync
-hce-cli list                       # 列出服务端所有已索引 collection
-hce-cli clear                      # 清除当前 codebase 的服务端索引 + 本地 state
-hce-cli init [--id <name>]         # 显式初始化 .hce/config.json
+hce sync                       # 扫描并把变更推到服务端
+hce search <query> [-k 10] [-f text|json] [--no-sync]   # 语义搜索（默认先 sync）
+hce status                     # 当前 codebase 配置 / 上次 sync
+hce list                       # 列出服务端所有已索引 collection
+hce clear                      # 清除当前 codebase 的服务端索引 + 本地 state
+hce init [--id <name>]         # 显式初始化 .hce/config.json
 # 通用：-p <path> 指定项目根；--base-url / HCE_BASE_URL 覆盖服务端地址
 ```
 

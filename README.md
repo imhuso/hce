@@ -13,7 +13,7 @@
 
 HCE (Hybrid Code Engine) is a semantic search engine for multiple codebases, using a **client-server + push model**:
 
-- **Client (`hce-cli`)** scans your codebase locally, computes an incremental diff, and pushes only the **content of changed files** to the server. Source code always stays on the client — the server never reads your filesystem.
+- **Client (`hce`)** scans your codebase locally, computes an incremental diff, and pushes only the **content of changed files** to the server. Source code always stays on the client — the server never reads your filesystem.
 - **Server (`hce-server`)** receives file content and handles AST chunking (tree-sitter), content dedup, embedding, writing to the vector store (Milvus), and hybrid retrieval. One HTTP service serves many codebases, isolated into separate Milvus collections by `codebase_id`.
 
 A companion web frontend (`hce-web`) lets you search across codebases in the browser.
@@ -37,6 +37,14 @@ A companion web frontend (`hce-web`) lets you search across codebases in the bro
 
 ### Option 1 — full stack via docker compose (recommended)
 
+One command — creates `.env` if missing, brings the stack up, waits until the backend is healthy, then prints the next steps:
+
+```bash
+make up
+```
+
+Or do it by hand:
+
 ```bash
 # 1. Set your embedding API key
 cp .env.example .env
@@ -48,6 +56,10 @@ docker compose up -d --build
 # 3. Open the frontend
 open http://localhost:9528
 ```
+
+> **No API key?** Try it fully local with zero keys: install [Ollama](https://ollama.com), `ollama pull nomic-embed-text`, then in `.env` set `HCE_EMBEDDING_PROVIDER=ollama`, `HCE_EMBEDDING_MODEL=nomic-embed-text`, `HCE_EMBEDDING_BASE_URL=http://host.docker.internal:11434` (see the bottom of `.env.example`). Your source never leaves your machine.
+
+> The stack alone gives you the server + web UI — the UI stays empty until you install the `hce` CLI (below) and run `hce sync` in a project.
 
 ### Option 2 — run the server from source
 
@@ -62,26 +74,26 @@ go run ./cmd/server -config configs/config.yaml
 
 ## 📦 Install the CLI
 
-`hce-cli` is a pure-Go client (**no CGO required**), a single cross-platform binary. Pick one:
+`hce` is a pure-Go client (**no CGO required**), a single cross-platform binary. Pick one:
 
 ```bash
 # A. go install (with a Go toolchain; installs to ~/go/bin)
-go install github.com/imhuso/hce/cmd/hce-cli@latest
+go install github.com/imhuso/hce/cmd/hce@latest
 
 # B. Prebuilt binary from Releases (no Go needed) — darwin/linux/windows × amd64/arm64
 #    https://github.com/imhuso/hce/releases — download, extract, put on your PATH.
 gh release download --repo imhuso/hce --pattern '*linux_amd64*'
 
 # C. Build from source
-go build -o hce-cli ./cmd/hce-cli && sudo mv hce-cli /usr/local/bin/
+go build -o hce ./cmd/hce && sudo mv hce /usr/local/bin/
 
-hce-cli version    # release builds show the tag version; source builds show "dev"
+hce version    # release builds show the tag version; source builds show "dev"
 ```
 
 Point the CLI at your server once, machine-wide (shared by all projects):
 
 ```bash
-hce-cli config --base-url http://<server-ip-or-domain>:9528/api/v1
+hce config --base-url http://<server-ip-or-domain>:9528/api/v1
 ```
 
 ---
@@ -89,14 +101,14 @@ hce-cli config --base-url http://<server-ip-or-domain>:9528/api/v1
 ## 🖥️ CLI Usage
 
 ```bash
-hce-cli sync                       # scan and push changes to the server
-hce-cli search <query> [-k 10] [-f text|json] [--no-sync]   # semantic search (syncs first by default)
-hce-cli status                     # current codebase config / last sync
-hce-cli list                       # list all indexed collections on the server
-hce-cli clear                      # clear this codebase's server index + local state
-hce-cli init [--id <name>]         # explicitly initialize .hce/config.json
-hce-cli config [--base-url <url>]  # view / set the global server address (~/.hce/config.json)
-hce-cli version                    # print version
+hce sync                       # scan and push changes to the server
+hce search <query> [-k 10] [-f text|json] [--no-sync]   # semantic search (syncs first by default)
+hce status                     # current codebase config / last sync
+hce list                       # list all indexed collections on the server
+hce clear                      # clear this codebase's server index + local state
+hce init [--id <name>]         # explicitly initialize .hce/config.json
+hce config [--base-url <url>]  # view / set the global server address (~/.hce/config.json)
+hce version                    # print version
 ```
 
 | Option | Default | Notes |
@@ -154,7 +166,7 @@ This repo ships `gemini-embedding-001` as the default for zero-cost onboarding. 
 
 ```
 ┌─────────────────────────┐      push (changed file content only)   ┌──────────────────────────────┐
-│        hce-cli          │  ───────────────────────────────────▶   │          hce-server          │
+│        hce          │  ───────────────────────────────────▶   │          hce-server          │
 │   (local, holds source) │   POST /index/upsert  /delete           │  chunk → dedup → embedding → │
 │                         │   POST /index/flush                     │  write Milvus → hybrid search│
 │  scan → diff → push     │  ◀───────────────────────────────────   │                              │
@@ -217,7 +229,7 @@ All endpoints live under `/api/v1` and return a uniform `{code, message, data}`.
 CGO_ENABLED=1 CGO_CFLAGS="-Wno-null-character" go build -ldflags="-s -w" -o hce-server ./cmd/server/
 
 # Build the CLI
-go build -o bin/hce-cli ./cmd/hce-cli/
+go build -o bin/hce ./cmd/hce/
 
 # Static checks (no unit tests yet)
 go vet ./...
@@ -226,7 +238,7 @@ go build ./...
 
 Deep implementation notes and gotchas (Milvus VARCHAR caps, UTF-8 sanitization, asymmetric embedding task types, the codebase_id → collection scheme) live in [`CLAUDE.md`](./CLAUDE.md).
 
-**Releasing** (maintainers): the version is anchored in the root `package.json`. `npm run release` ([bumpp](https://github.com/antfu-collective/bumpp)) bumps + tags + pushes; pushing a `v*` tag triggers `.github/workflows/release.yml`, which cross-compiles hce-cli for five platforms and publishes a GitHub Release.
+**Releasing** (maintainers): the version is anchored in the root `package.json`. `npm run release` ([bumpp](https://github.com/antfu-collective/bumpp)) bumps + tags + pushes; pushing a `v*` tag triggers `.github/workflows/release.yml`, which cross-compiles hce for five platforms and publishes a GitHub Release.
 
 ---
 

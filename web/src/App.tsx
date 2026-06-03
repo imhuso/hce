@@ -399,7 +399,7 @@ function App() {
                     <Boxes className="size-6" />
                   </span>
                   <p className="mt-4 font-medium">还没有任何索引</p>
-                  <p className="mt-1 text-sm text-muted-foreground">在你的项目里跑 <code className="rounded bg-muted px-1 py-0.5">hce-cli sync</code> 推送上来</p>
+                  <p className="mt-1 text-sm text-muted-foreground">在你的项目里跑 <code className="rounded bg-muted px-1 py-0.5">hce sync</code> 推送上来</p>
                 </div>
               )}
 
@@ -426,11 +426,11 @@ function App() {
                 <h3 className="text-sm font-semibold">如何把代码库索引进来</h3>
               </div>
               <div className="space-y-2.5 px-4 py-4 text-sm text-muted-foreground">
-                <p>浏览器读不到本地文件，索引由命令行客户端 <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-brand">hce-cli</code> 推送：</p>
+                <p>浏览器读不到本地文件，索引由命令行客户端 <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-brand">hce</code> 推送：</p>
                 <pre className="bg-code overflow-x-auto rounded-lg p-3.5 font-mono text-[12.5px] leading-relaxed text-zinc-200 ring-1 ring-white/5">
 {`# 在项目根目录
-hce-cli sync       # 扫描 + 推送变更
-hce-cli search ".." # 自动 sync 后搜索（也会让它出现在上面）`}
+hce sync       # 扫描 + 推送变更
+hce search ".." # 自动 sync 后搜索（也会让它出现在上面）`}
                 </pre>
                 <p>同步或搜索过的代码库会自动出现在「代码库」里，点一下即可在网页上搜，无需再复制 codebase_id。</p>
               </div>

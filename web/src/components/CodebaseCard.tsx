@@ -68,7 +68,7 @@ export function CodebaseCard({ index, active, onSelect, onDelete }: Props) {
       title={
         index.named
           ? "点击：选它来搜索"
-          : "本机未知此库的 codebase_id（id 经单向哈希，服务端不存原文）。用 hce-cli 搜索 / 同步一次即可自动命名后在此管理。"
+          : "本机未知此库的 codebase_id（id 经单向哈希，服务端不存原文）。用 hce 搜索 / 同步一次即可自动命名后在此管理。"
       }
       className={cn(
         "elevate group relative flex flex-col gap-3 rounded-xl bg-card p-4 ring-1 transition-all duration-200",
