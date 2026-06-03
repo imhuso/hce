@@ -56,7 +56,7 @@ CLI 默认 base URL 是 **`http://localhost:9528/api/v1`**，即默认走 nginx 
 ## 架构与数据流
 
 ### sync（客户端 → 服务端，`internal/client/sync.go` + `internal/indexer/indexer.go`）
-1. `Scan` 遍历 root（默认扩展名白名单 + `.gitignore` + 内置忽略规则，跳过 >1MB / 二进制 / 非 UTF-8 文件）。
+1. `Scan` 遍历 root（默认扩展名白名单 + `.gitignore` + `.hceignore` + 内置忽略规则，跳过 >1MB / 二进制 / 非 UTF-8 文件）。`.hceignore` 只读项目根那一个、规则叠加在默认+`.gitignore` 之上、**不支持 `!` 反忽略**（见 `scanner.go` 的 `loadIgnoreFile`/`patternMatch`）。
 2. diff 对比 `.hce/index.json`：**快路径**靠 size+mtime 判定未变（大库秒过）；**慢路径**才算 sha256 验证内容。
 3. 变更文件按 batch（默认 50 文件 / 5 MiB）并发 `POST /index/upsert`；已删除文件走 `/index/delete`。
 4. 服务端 `IndexFiles` 做**chunk 级增量**：切分 → 算每个 chunk 的 content sha256 → 查 Milvus 已有 chunk → 命中 hash 的复用（跳过 embedding），新 chunk 批量 embed + insert，消失的旧 chunk delete。

@@ -160,6 +160,25 @@ hce version                    # 显示版本
 | `HCE_EMBEDDING_DIM` | | 自托管非 OpenAI 模型需手动指定维度（如 Qwen3-Embedding-8B=4096） |
 | `MILVUS_ADDRESS` | | Milvus 地址，默认 `localhost:19530` |
 
+### 排除不想索引的文件（`.hceignore`）
+
+扫描器默认已跳过 `.gitignore` 条目和内置噪音（`node_modules`、`dist`、lockfile、压缩产物、点开头目录…）。若想排除那些 **git 里要追踪、但不想被索引** 的东西——测试夹具、生成代码、vendored 快照、大段文档——在项目根（与 `.hce/` 同级）放一个 `.hceignore`：
+
+```gitignore
+# .hceignore —— 放在项目根
+testdata/
+**/__generated__/
+*.snapshot
+docs/legacy/
+```
+
+语法是 `.gitignore` 的实用子集：`#` 注释与空行跳过；单段（`*.snapshot`）匹配任意层级；多段（`docs/legacy`）按路径前缀匹配；前导 `/` 锚定根；`**` 跨目录；尾部 `/` 与 `/**` 等价。两个与 git 的差异要记牢：
+
+- **只读项目根** —— 仅读项目根那一个 `.hceignore`（不支持各级目录嵌套的 ignore 文件）。
+- **只能叠加** —— 只能 *新增* 排除；**不支持** `!pattern` 反忽略，因此无法把已被 `.gitignore` 或内置规则排除的文件重新纳入。
+
+把 `.hceignore` 提交进仓库，团队就共享同一套索引范围。
+
 ---
 
 ## 🏗️ 工作原理
@@ -179,7 +198,7 @@ hce version                    # 显示版本
 
 **sync（客户端 → 服务端）**
 
-1. **Scan** 遍历项目根：扩展名白名单 + `.gitignore` + 内置忽略规则，跳过 >1MB / 二进制 / 非 UTF-8 文件。
+1. **Scan** 遍历项目根：扩展名白名单 + `.gitignore` + `.hceignore` + 内置忽略规则，跳过 >1MB / 二进制 / 非 UTF-8 文件。
 2. **diff** 对比本地 `.hce/index.json`：快路径靠 size+mtime 判定未变；慢路径才算 sha256 验证内容。
 3. 变更文件按 batch（默认 50 文件 / 5 MiB）并发 `POST /index/upsert`；删除文件走 `/index/delete`。
 4. 服务端做 **chunk 级增量**：切分 → 算 content sha256 → 查 Milvus 已有 chunk → 命中 hash 的复用（跳过 embedding），新 chunk 批量 embed + insert，消失的旧 chunk delete。

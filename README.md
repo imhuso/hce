@@ -160,6 +160,25 @@ This repo ships `gemini-embedding-001` as the default for zero-cost onboarding. 
 | `HCE_EMBEDDING_DIM` | | dimension for self-hosted non-OpenAI models (e.g. Qwen3-Embedding-8B=4096) |
 | `MILVUS_ADDRESS` | | Milvus address, defaults to `localhost:19530` |
 
+### Excluding files from indexing (`.hceignore`)
+
+The scanner already skips your `.gitignore` entries plus built-in noise (`node_modules`, `dist`, lockfiles, minified assets, dot-directories, …). To exclude things that *are* tracked in git but you don't want indexed — test fixtures, generated code, vendored snapshots, large docs — add a `.hceignore` at the project root (next to `.hce/`):
+
+```gitignore
+# .hceignore — lives at the project root
+testdata/
+**/__generated__/
+*.snapshot
+docs/legacy/
+```
+
+Syntax is a practical subset of `.gitignore`: `#` comments and blank lines are skipped; a single segment (`*.snapshot`) matches at any depth; multi-segment patterns (`docs/legacy`) match by path prefix; a leading `/` anchors to the root; `**` spans directories; trailing `/` and `/**` are equivalent. Two differences from git to keep in mind:
+
+- **Root-level only** — only the single `.hceignore` at the project root is read (no nested per-directory files).
+- **Additive only** — it can only *add* exclusions; `!pattern` re-include is **not** supported, so it cannot bring back a file already excluded by `.gitignore` or the built-in rules.
+
+Commit `.hceignore` to share the same indexing scope across your team.
+
 ---
 
 ## 🏗️ How It Works
@@ -179,7 +198,7 @@ This repo ships `gemini-embedding-001` as the default for zero-cost onboarding. 
 
 **sync (client → server)**
 
-1. **Scan** the project root: extension allowlist + `.gitignore` + built-in ignore rules, skipping files >1MB / binary / non-UTF-8.
+1. **Scan** the project root: extension allowlist + `.gitignore` + `.hceignore` + built-in ignore rules, skipping files >1MB / binary / non-UTF-8.
 2. **diff** against the local `.hce/index.json`: fast path rules out unchanged files via size+mtime; slow path sha256-verifies content.
 3. Changed files are pushed concurrently in batches (default 50 files / 5 MiB) via `POST /index/upsert`; deleted files go to `/index/delete`.
 4. The server does **chunk-level incremental indexing**: chunk → content sha256 → look up existing chunks in Milvus → reuse hash-matched chunks (skip embedding), batch-embed + insert new chunks, delete chunks that disappeared.
